@@ -23,6 +23,17 @@ export const requireAuth = async (
   const token = authHeader.split('Bearer ')[1]
 
   try {
+    // MOCK AUTHENTICATION for testing
+    // Will be replaced with Supabase later
+    if (token === 'mock-token') {
+      req.user = {
+        uid: 'mock-user-id-123',
+        email: 'test@example.com',
+        role: 'user',
+      }
+      return next()
+    }
+
     const decodedToken = await auth.verifyIdToken(token)
     req.user = {
       uid: decodedToken.uid,

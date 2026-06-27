@@ -3,6 +3,9 @@ import MainLayout from "./layouts/MainLayout"
 import DashboardLayout from "./layouts/DashboardLayout"
 import LandingPage from "./pages/LandingPage"
 import CopilotPage from "./pages/CopilotPage"
+import SchemesPage from "./pages/SchemesPage"
+import ProfilePage from "./pages/ProfilePage"
+import ProtectedRoute from "./components/ProtectedRoute"
 
 function App() {
   return (
@@ -11,8 +14,12 @@ function App() {
         <Route element={<MainLayout />}>
           <Route path="/" element={<LandingPage />} />
         </Route>
-        <Route element={<DashboardLayout />}>
-          <Route path="/copilot" element={<CopilotPage />} />
+        <Route element={<ProtectedRoute />}>
+          <Route element={<DashboardLayout />}>
+            <Route path="/copilot" element={<CopilotPage />} />
+            <Route path="/schemes" element={<SchemesPage />} />
+            <Route path="/profile" element={<ProfilePage />} />
+          </Route>
         </Route>
       </Routes>
     </Router>

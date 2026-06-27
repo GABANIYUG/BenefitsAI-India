@@ -1,6 +1,9 @@
-import { Outlet } from "react-router-dom"
+import { Outlet, Link } from "react-router-dom"
+import { useAuth } from "../contexts/AuthContext"
 
 export default function DashboardLayout() {
+  const { user, logout } = useAuth();
+
   return (
     <div className="flex h-screen overflow-hidden bg-surface-dim">
       <nav className="hidden md:flex flex-col h-screen w-64 fixed left-0 top-0 z-40 p-4 gap-stack-md bg-surface-container-lowest shadow-lg shadow-black/50 border-r border-white/[0.02]">
@@ -17,39 +20,35 @@ export default function DashboardLayout() {
 
         {/* Main Navigation */}
         <div className="flex flex-col gap-1 flex-1 mt-4">
-          <a className="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest rounded-xl transition-all group" href="#">
+          <Link to="/copilot" className="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest rounded-xl transition-all group">
+            <span className="material-symbols-outlined text-[20px] group-hover:scale-110 transition-transform duration-200">chat_bubble</span>
+            <span className="font-label-sm text-label-sm">Copilot Chat</span>
+          </Link>
+          <Link to="/schemes" className="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest rounded-xl transition-all group">
             <span className="material-symbols-outlined text-[20px] group-hover:scale-110 transition-transform duration-200">analytics</span>
-            <span className="font-label-sm text-label-sm">Results</span>
-          </a>
-          <a className="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest rounded-xl transition-all group" href="#">
-            <span className="material-symbols-outlined text-[20px] group-hover:scale-110 transition-transform duration-200">bookmark</span>
-            <span className="font-label-sm text-label-sm">Saved</span>
-          </a>
-          <a className="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest rounded-xl transition-all group" href="#">
-            <span className="material-symbols-outlined text-[20px] group-hover:scale-110 transition-transform duration-200">group</span>
-            <span className="font-label-sm text-label-sm">Family</span>
-          </a>
+            <span className="font-label-sm text-label-sm">All Schemes</span>
+          </Link>
+          <Link to="/profile" className="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest rounded-xl transition-all group">
+            <span className="material-symbols-outlined text-[20px] group-hover:scale-110 transition-transform duration-200">person</span>
+            <span className="font-label-sm text-label-sm">My Profile</span>
+          </Link>
         </div>
 
         {/* CTA Action */}
         <div className="px-2 py-4">
-          <button className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-primary-container to-secondary-container text-on-primary-container font-label-sm text-label-sm font-bold shadow-[0_0_20px_rgba(85,141,255,0.2)] hover:shadow-[0_0_25px_rgba(85,141,255,0.4)] transition-all flex items-center justify-center gap-2 relative overflow-hidden group">
+          <Link to="/schemes" className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-primary-container to-secondary-container text-on-primary-container font-label-sm text-label-sm font-bold shadow-[0_0_20px_rgba(85,141,255,0.2)] hover:shadow-[0_0_25px_rgba(85,141,255,0.4)] transition-all flex items-center justify-center gap-2 relative overflow-hidden group">
             <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out"></div>
             <span className="relative z-10">Check Eligibility</span>
             <span className="material-symbols-outlined text-[18px] relative z-10">arrow_forward</span>
-          </button>
+          </Link>
         </div>
 
         {/* Footer Navigation */}
         <div className="flex flex-col gap-1 border-t border-outline-variant/20 pt-4">
-          <a className="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest rounded-xl transition-all" href="#">
-            <span className="material-symbols-outlined text-[20px]">help_outline</span>
-            <span className="font-label-sm text-label-sm">Help</span>
-          </a>
-          <a className="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest rounded-xl transition-all" href="#">
-            <span className="material-symbols-outlined text-[20px]">settings</span>
-            <span className="font-label-sm text-label-sm">Settings</span>
-          </a>
+          <button onClick={logout} className="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-red-400 hover:bg-surface-container-highest rounded-xl transition-all w-full text-left">
+            <span className="material-symbols-outlined text-[20px]">logout</span>
+            <span className="font-label-sm text-label-sm">Logout</span>
+          </button>
         </div>
       </nav>
       
