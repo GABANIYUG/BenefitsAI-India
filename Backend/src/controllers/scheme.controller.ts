@@ -18,7 +18,7 @@ export const getSchemes = async (req: Request, res: Response) => {
 
 export const getSchemeById = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params
+    const id = req.params.id as string
     const scheme = await prisma.scheme.findUnique({
       where: { id },
       include: { category: true, documents: true }

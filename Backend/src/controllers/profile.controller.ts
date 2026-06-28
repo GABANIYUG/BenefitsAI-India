@@ -20,8 +20,8 @@ const profileSchema = z.object({
 
 export const getProfiles = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const userId = req.user?.uid
-    if (!userId) return res.status(401).json({ success: false, message: 'Unauthorized' })
+    if (!req.user || !req.user.uid) return res.status(401).json({ success: false, message: 'Unauthorized' })
+    const userId = req.user.uid
 
     const profiles = await prisma.profile.findMany({
       where: { userId }
@@ -36,8 +36,8 @@ export const getProfiles = async (req: AuthenticatedRequest, res: Response) => {
 
 export const createProfile = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const userId = req.user?.uid
-    if (!userId) return res.status(401).json({ success: false, message: 'Unauthorized' })
+    if (!req.user || !req.user.uid) return res.status(401).json({ success: false, message: 'Unauthorized' })
+    const userId = req.user.uid
 
     const validatedData = profileSchema.parse(req.body)
 
@@ -58,7 +58,7 @@ export const createProfile = async (req: AuthenticatedRequest, res: Response) =>
     res.status(201).json({ success: true, data: newProfile })
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ success: false, message: 'Validation Error', errors: error.errors })
+      return res.status(400).json({ success: false, message: 'Validation Error', errors: error.issues })
     }
     console.error('Error creating profile:', error)
     res.status(500).json({ success: false, message: 'Server Error' })
@@ -67,9 +67,9 @@ export const createProfile = async (req: AuthenticatedRequest, res: Response) =>
 
 export const updateProfile = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const { id } = req.params
-    const userId = req.user?.uid
-    if (!userId) return res.status(401).json({ success: false, message: 'Unauthorized' })
+    const id = req.params.id as string
+    if (!req.user || !req.user.uid) return res.status(401).json({ success: false, message: 'Unauthorized' })
+    const userId = req.user.uid
 
     // Ensure they own the profile
     const existing = await prisma.profile.findFirst({ where: { id, userId } })
@@ -85,7 +85,7 @@ export const updateProfile = async (req: AuthenticatedRequest, res: Response) =>
     res.status(200).json({ success: true, data: updatedProfile })
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ success: false, message: 'Validation Error', errors: error.errors })
+      return res.status(400).json({ success: false, message: 'Validation Error', errors: error.issues })
     }
     console.error('Error updating profile:', error)
     res.status(500).json({ success: false, message: 'Server Error' })
