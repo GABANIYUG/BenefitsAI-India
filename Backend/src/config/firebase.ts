@@ -1,21 +1,21 @@
-import admin from 'firebase-admin'
+import { initializeApp, getApps, cert } from 'firebase-admin/app';
+import { getAuth } from 'firebase-admin/auth';
+import { getFirestore } from 'firebase-admin/firestore';
 
-if (!admin.apps.length) {
+if (!getApps().length) {
   try {
     if (process.env.FIREBASE_SERVICE_ACCOUNT) {
       const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-      admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount)
+      initializeApp({
+        credential: cert(serviceAccount)
       });
     } else {
-      admin.initializeApp();
+      initializeApp();
     }
   } catch (error) {
     console.error('Firebase Admin initialization failed:', error)
   }
 }
 
-export const auth = admin.auth()
-export const db = admin.firestore() // If needed alongside Prisma
-
-export default admin
+export const auth = getAuth()
+export const db = getFirestore() // If needed alongside Prisma
