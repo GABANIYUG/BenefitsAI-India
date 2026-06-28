@@ -2,7 +2,7 @@ import { Outlet, Link } from "react-router-dom"
 import { useAuth } from "../contexts/AuthContext"
 
 export default function DashboardLayout() {
-  const { user, logout } = useAuth();
+  const { logout } = useAuth();
 
   return (
     <div className="flex h-screen overflow-hidden bg-surface-dim">
