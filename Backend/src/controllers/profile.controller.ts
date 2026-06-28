@@ -1,5 +1,5 @@
 import { Request, Response } from 'express'
-import prisma from '../lib/prisma'
+import { supabase } from '../lib/supabase'
 import { AuthenticatedRequest } from '../middlewares/auth.middleware'
 import { z } from 'zod'
 
@@ -23,9 +23,12 @@ export const getProfiles = async (req: AuthenticatedRequest, res: Response) => {
     if (!req.user || !req.user.uid) return res.status(401).json({ success: false, message: 'Unauthorized' })
     const userId = req.user.uid
 
-    const profiles = await prisma.profile.findMany({
-      where: { userId }
-    })
+    const { data: profiles, error } = await supabase
+      .from('Profile')
+      .select('*')
+      .eq('userId', userId)
+
+    if (error) throw error
     
     res.status(200).json({ success: true, data: profiles })
   } catch (error) {
@@ -41,19 +44,23 @@ export const createProfile = async (req: AuthenticatedRequest, res: Response) =>
 
     const validatedData = profileSchema.parse(req.body)
 
-    // Ensure User exists in DB, or create them via a sync if this is the first login
-    await prisma.user.upsert({
-      where: { id: userId },
-      update: { email: req.user.email },
-      create: { id: userId, email: req.user.email }
-    })
+    // Ensure User exists in DB
+    const { error: upsertError } = await supabase
+      .from('User')
+      .upsert({ id: userId, email: req.user.email })
 
-    const newProfile = await prisma.profile.create({
-      data: {
+    if (upsertError) throw upsertError
+
+    const { data: newProfile, error } = await supabase
+      .from('Profile')
+      .insert({
         ...validatedData,
         userId
-      }
-    })
+      })
+      .select()
+      .single()
+
+    if (error) throw error
 
     res.status(201).json({ success: true, data: newProfile })
   } catch (error) {
@@ -72,15 +79,25 @@ export const updateProfile = async (req: AuthenticatedRequest, res: Response) =>
     const userId = req.user.uid
 
     // Ensure they own the profile
-    const existing = await prisma.profile.findFirst({ where: { id, userId } })
-    if (!existing) return res.status(404).json({ success: false, message: 'Profile not found' })
+    const { data: existing, error: findError } = await supabase
+      .from('Profile')
+      .select('id')
+      .eq('id', id)
+      .eq('userId', userId)
+      .single()
+
+    if (findError || !existing) return res.status(404).json({ success: false, message: 'Profile not found' })
 
     const validatedData = profileSchema.parse(req.body)
 
-    const updatedProfile = await prisma.profile.update({
-      where: { id },
-      data: validatedData
-    })
+    const { data: updatedProfile, error: updateError } = await supabase
+      .from('Profile')
+      .update(validatedData)
+      .eq('id', id)
+      .select()
+      .single()
+
+    if (updateError) throw updateError
 
     res.status(200).json({ success: true, data: updatedProfile })
   } catch (error) {

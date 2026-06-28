@@ -1,11 +1,10 @@
 import { Request, Response, NextFunction } from 'express'
-import { auth } from '../config/firebase'
+import { supabase } from '../lib/supabase'
 
 export interface AuthenticatedRequest extends Request {
   user?: {
     uid: string;
     email?: string;
-    role?: string;
   }
 }
 
@@ -23,26 +22,20 @@ export const requireAuth = async (
   const token = authHeader.split('Bearer ')[1]
 
   try {
-    // MOCK AUTHENTICATION for testing
-    // Will be replaced with Supabase later
-    if (token === 'mock-token') {
-      req.user = {
-        uid: 'mock-user-id-123',
-        email: 'test@example.com',
-        role: 'user',
-      }
-      return next()
+    const { data: { user }, error } = await supabase.auth.getUser(token)
+    
+    if (error || !user) {
+      console.error('Supabase token verification error:', error)
+      return res.status(401).json({ success: false, message: 'Unauthorized: Invalid token' })
     }
 
-    const decodedToken = await auth.verifyIdToken(token)
     req.user = {
-      uid: decodedToken.uid,
-      email: decodedToken.email,
-      role: decodedToken.role, // Custom claims if set
+      uid: user.id,
+      email: user.email,
     }
     next()
   } catch (error) {
-    console.error('Token verification error:', error)
+    console.error('Unexpected token verification error:', error)
     return res.status(401).json({ success: false, message: 'Unauthorized: Invalid token' })
   }
 }
@@ -58,11 +51,12 @@ export const optionalAuth = async (
   if (authHeader && authHeader.startsWith('Bearer ')) {
     const token = authHeader.split('Bearer ')[1]
     try {
-      const decodedToken = await auth.verifyIdToken(token)
-      req.user = {
-        uid: decodedToken.uid,
-        email: decodedToken.email,
-        role: decodedToken.role,
+      const { data: { user }, error } = await supabase.auth.getUser(token)
+      if (!error && user) {
+        req.user = {
+          uid: user.id,
+          email: user.email,
+        }
       }
     } catch (error) {
       // Ignore error for optional auth

@@ -1,14 +1,17 @@
 import { Request, Response } from 'express'
-import prisma from '../lib/prisma'
+import { supabase } from '../lib/supabase'
 import { AuthenticatedRequest } from '../middlewares/auth.middleware'
 import { EligibilityEvaluator, RuleAST } from '../services/eligibility'
 
 export const getSchemes = async (req: Request, res: Response) => {
   try {
-    const schemes = await prisma.scheme.findMany({
-      where: { isActive: true },
-      include: { category: true }
-    })
+    const { data: schemes, error } = await supabase
+      .from('Scheme')
+      .select('*, category:categoryId(*)')
+      .eq('isActive', true)
+
+    if (error) throw error
+
     res.status(200).json({ success: true, data: schemes })
   } catch (error) {
     console.error('Error fetching schemes:', error)
@@ -19,12 +22,18 @@ export const getSchemes = async (req: Request, res: Response) => {
 export const getSchemeById = async (req: Request, res: Response) => {
   try {
     const id = req.params.id as string
-    const scheme = await prisma.scheme.findUnique({
-      where: { id },
-      include: { category: true, documents: true }
-    })
     
-    if (!scheme) return res.status(404).json({ success: false, message: 'Scheme not found' })
+    // We query the scheme and join category and documents.
+    // Ensure that SchemeDocument foreign key points to Scheme table id.
+    const { data: scheme, error } = await supabase
+      .from('Scheme')
+      .select('*, category:categoryId(*), documents:SchemeDocument(*)')
+      .eq('id', id)
+      .single()
+    
+    if (error || !scheme) {
+      return res.status(404).json({ success: false, message: 'Scheme not found' })
+    }
 
     res.status(200).json({ success: true, data: scheme })
   } catch (error) {
@@ -42,13 +51,23 @@ export const getEligibleSchemes = async (req: AuthenticatedRequest, res: Respons
       return res.status(400).json({ success: false, message: 'Profile ID and Authentication required' })
     }
 
-    const profile = await prisma.profile.findFirst({ where: { id: profileId, userId } })
-    if (!profile) return res.status(404).json({ success: false, message: 'Profile not found' })
+    const { data: profile, error: profileError } = await supabase
+      .from('Profile')
+      .select('*')
+      .eq('id', profileId)
+      .eq('userId', userId)
+      .single()
 
-    const allSchemes = await prisma.scheme.findMany({
-      where: { isActive: true },
-      include: { category: true }
-    })
+    if (profileError || !profile) {
+      return res.status(404).json({ success: false, message: 'Profile not found' })
+    }
+
+    const { data: allSchemes, error: schemesError } = await supabase
+      .from('Scheme')
+      .select('*, category:categoryId(*)')
+      .eq('isActive', true)
+
+    if (schemesError || !allSchemes) throw schemesError
 
     const evaluator = new EligibilityEvaluator(profile)
     const eligibleSchemes = allSchemes.map(scheme => {

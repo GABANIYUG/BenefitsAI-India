@@ -2,8 +2,7 @@ import { Request, Response } from 'express'
 import { AuthenticatedRequest } from '../middlewares/auth.middleware'
 import { gemini, generateEmbedding } from '../lib/gemini'
 import qdrant, { SCHEMES_COLLECTION } from '../lib/qdrant'
-import prisma from '../lib/prisma'
-import { EligibilityEvaluator, RuleAST } from '../services/eligibility'
+import { supabase } from '../lib/supabase'
 
 export const handleChat = async (req: AuthenticatedRequest, res: Response) => {
   try {
@@ -25,17 +24,27 @@ export const handleChat = async (req: AuthenticatedRequest, res: Response) => {
 
       const schemeIds = searchResults.map(r => r.id as string)
       if (schemeIds.length > 0) {
-        const schemes = await prisma.scheme.findMany({
-          where: { qdrantId: { in: schemeIds } }
-        })
-        contextData = schemes.map(s => `Scheme: ${s.title}\nDescription: ${s.description}\nBenefits: ${JSON.stringify(s.benefits)}`).join("\n\n")
+        const { data: schemes, error } = await supabase
+          .from('Scheme')
+          .select('*')
+          .in('qdrantId', schemeIds)
+
+        if (!error && schemes) {
+          contextData = schemes.map(s => `Scheme: ${s.title}\nDescription: ${s.description}\nBenefits: ${JSON.stringify(s.benefits)}`).join("\n\n")
+        }
       }
     }
 
     // 3. Load user profile if provided for personalized eligibility context
     let profileContext = ""
     if (profileId && userId) {
-      const profile = await prisma.profile.findFirst({ where: { id: profileId, userId } })
+      const { data: profile } = await supabase
+        .from('Profile')
+        .select('*')
+        .eq('id', profileId)
+        .eq('userId', userId)
+        .single()
+        
       if (profile) {
         profileContext = `User Profile: Age ${profile.age}, State ${profile.state}, Income ${profile.income}, Student: ${profile.isStudent}.`
       }
@@ -66,14 +75,18 @@ export const handleChat = async (req: AuthenticatedRequest, res: Response) => {
     // 5. Save chat history if session provided
     if (sessionId && userId) {
       // Validate session belongs to user
-      const session = await prisma.chatSession.findFirst({ where: { id: sessionId, userId } })
+      const { data: session } = await supabase
+        .from('ChatSession')
+        .select('*')
+        .eq('id', sessionId)
+        .eq('userId', userId)
+        .single()
+        
       if (session) {
-        await prisma.chatMessage.createMany({
-          data: [
-            { sessionId, role: 'user', content: message },
-            { sessionId, role: 'assistant', content: reply }
-          ]
-        })
+        await supabase.from('ChatMessage').insert([
+          { sessionId, role: 'user', content: message },
+          { sessionId, role: 'assistant', content: reply }
+        ])
       }
     }
 

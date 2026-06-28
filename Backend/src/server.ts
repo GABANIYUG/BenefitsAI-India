@@ -1,7 +1,7 @@
 import app from './app'
 import dotenv from 'dotenv'
 import { initializeQdrant } from './lib/qdrant'
-import prisma from './lib/prisma'
+
 
 dotenv.config()
 
@@ -9,9 +9,7 @@ const PORT = process.env.PORT || 8000
 
 const startServer = async () => {
   try {
-    // Check DB Connection
-    await prisma.$connect()
-    console.log('PostgreSQL database connected')
+// Removed Prisma connect
 
     // Initialize Vector DB
     await initializeQdrant()

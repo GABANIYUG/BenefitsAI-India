@@ -1,15 +1,12 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-
-interface User {
-  uid: string;
-  email: string;
-}
+import { supabase } from '../lib/supabase';
+import type { Session, User } from '@supabase/supabase-js';
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: () => void;
-  logout: () => void;
+  login: () => void; // This will just trigger OAuth or we can update it if they have email/pass UI
+  logout: () => Promise<void>;
   token: string | null;
 }
 
@@ -17,35 +14,47 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const [token, setToken] = useState<string | null>(null);
 
   useEffect(() => {
-    // Mock user for now since Supabase will be added later
-    const mockUser = {
-      uid: 'mock-user-id-123',
-      email: 'test@example.com',
-    };
-    setUser(mockUser);
-    setToken('mock-token');
-    setLoading(false);
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  const login = () => {
-    setUser({
-      uid: 'mock-user-id-123',
-      email: 'test@example.com',
+  const login = async () => {
+    // For now we can implement Google OAuth or direct to an auth page
+    // Using Google OAuth as default example
+    await supabase.auth.signInWithOAuth({
+      provider: 'google',
     });
-    setToken('mock-token');
   };
 
-  const logout = () => {
-    setUser(null);
-    setToken(null);
+  const logout = async () => {
+    await supabase.auth.signOut();
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, token }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      loading, 
+      login, 
+      logout, 
+      token: session?.access_token ?? null 
+    }}>
       {children}
     </AuthContext.Provider>
   );
