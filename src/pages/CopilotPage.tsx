@@ -9,6 +9,7 @@ interface Message {
   id: string;
   role: 'user' | 'assistant';
   content: string;
+  schemes?: any[];
 }
 
 export default function CopilotPage() {
@@ -38,7 +39,17 @@ export default function CopilotPage() {
   const mutation = useMutation({
     mutationFn: (msg: string) => sendCopilotMessage(msg, token),
     onSuccess: (data) => {
-      setMessages(prev => [...prev, { id: Date.now().toString(), role: 'assistant', content: data.reply }]);
+      const foundSchemes = data.schemes || [];
+      const replyContent = foundSchemes.length > 0 
+        ? `I found ${foundSchemes.length} schemes that might be a good match for you based on your request:`
+        : "I couldn't find any specific schemes matching your exact request right now. Try adjusting your search terms!";
+        
+      setMessages(prev => [...prev, { 
+        id: Date.now().toString(), 
+        role: 'assistant', 
+        content: replyContent,
+        schemes: foundSchemes
+      }]);
     },
     onError: () => {
       setMessages(prev => [...prev, { id: Date.now().toString(), role: 'assistant', content: "Sorry, I encountered an error connecting to the AI. Please try again later." }]);
@@ -100,6 +111,37 @@ export default function CopilotPage() {
             <div key={m.id} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
               <div className={`max-w-[80%] rounded-2xl p-4 ${m.role === 'user' ? 'bg-primary text-on-primary rounded-tr-sm' : 'glass-panel text-on-surface border border-outline-variant/20 rounded-tl-sm'}`}>
                 <p className="whitespace-pre-wrap font-body-md leading-relaxed">{m.content}</p>
+                
+                {m.schemes && m.schemes.length > 0 && (
+                  <div className="mt-4 flex flex-col gap-3">
+                    {m.schemes.map((scheme, idx) => (
+                      <div key={idx} className="bg-surface-container/50 border border-outline-variant/30 rounded-xl p-4 shadow-sm hover:border-primary/40 transition-colors">
+                        <div className="flex justify-between items-start gap-2 mb-2">
+                          <h4 className="font-headline-sm text-primary font-semibold">{scheme.title}</h4>
+                          {scheme.similarity && (
+                            <span className="bg-primary-container text-on-primary-container text-[10px] font-bold px-2 py-1 rounded-full whitespace-nowrap">
+                              {Math.round(scheme.similarity * 100)}% Match
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-on-surface-variant font-body-sm mb-3 line-clamp-3">{scheme.description}</p>
+                        <div className="flex flex-wrap items-center gap-2 justify-between">
+                          <span className="text-xs text-on-surface-variant/80 bg-surface-container-highest px-2 py-1 rounded-md">
+                            {scheme.department}
+                          </span>
+                          <div className="flex gap-2">
+                            <button className="text-xs font-semibold text-primary border border-primary/30 px-3 py-1.5 rounded-lg hover:bg-primary/10 transition-colors">
+                              Save
+                            </button>
+                            <a href={scheme.source_url} target="_blank" rel="noreferrer" className="text-xs font-semibold bg-primary text-on-primary px-3 py-1.5 rounded-lg hover:brightness-110 transition-all shadow-md">
+                              Apply Now
+                            </a>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           ))}
