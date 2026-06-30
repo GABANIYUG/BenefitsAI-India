@@ -41,10 +41,8 @@ export default function MainLayout() {
   }
 
   const handleCopilotClick = (e: React.MouseEvent) => {
-    if (!user) {
-      e.preventDefault()
-      login() // Trigger login flow if not authenticated
-    }
+    // Navigation is now handled by the Link component directly,
+    // and the route is unprotected for MVP, so we don't need to force login here.
   }
 
   return (

@@ -2,20 +2,14 @@ import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import OrbShader from "../components/canvas/OrbShader"
 import IndiaMap3D from "../components/canvas/IndiaMap3D"
-import { useAuth } from "../contexts/AuthContext"
 
 export default function LandingPage() {
   const [query, setQuery] = useState("");
   const [isListening, setIsListening] = useState(false);
   const navigate = useNavigate();
-  const { user, login } = useAuth();
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) {
-      // For now, auto-login if they try to search to simulate auth flow
-      login();
-    }
     if (query.trim()) {
       navigate(`/copilot?q=${encodeURIComponent(query)}`);
     } else {

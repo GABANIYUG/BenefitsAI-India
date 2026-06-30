@@ -7,7 +7,6 @@ import SchemesPage from "./pages/SchemesPage"
 import ProfilePage from "./pages/ProfilePage"
 import SettingsPage from "./pages/SettingsPage"
 import SavedSchemesPage from "./pages/SavedSchemesPage"
-import ProtectedRoute from "./components/ProtectedRoute"
 
 function App() {
   return (
@@ -16,14 +15,14 @@ function App() {
         <Route element={<MainLayout />}>
           <Route path="/" element={<LandingPage />} />
         </Route>
-        <Route element={<ProtectedRoute />}>
-          <Route element={<DashboardLayout />}>
-            <Route path="/copilot" element={<CopilotPage />} />
-            <Route path="/schemes" element={<SchemesPage />} />
-            <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/settings" element={<SettingsPage />} />
-            <Route path="/schemes/saved" element={<SavedSchemesPage />} />
-          </Route>
+        
+        {/* Dashboard Routes (Unprotected for MVP testing) */}
+        <Route element={<DashboardLayout />}>
+          <Route path="/copilot" element={<CopilotPage />} />
+          <Route path="/schemes" element={<SchemesPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/schemes/saved" element={<SavedSchemesPage />} />
         </Route>
       </Routes>
     </Router>
