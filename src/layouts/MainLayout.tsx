@@ -136,14 +136,14 @@ export default function MainLayout() {
                     <span className="material-symbols-outlined text-[18px]">person</span>
                     My Profile
                   </Link>
-                  <Link to="/schemes" onClick={() => setIsProfileMenuOpen(false)} className="group flex items-center gap-3 px-4 py-2 text-sm text-on-surface-variant hover:bg-surface-container-highest hover:text-on-surface transition-colors">
+                  <Link to="/schemes/saved" onClick={() => setIsProfileMenuOpen(false)} className="group flex items-center gap-3 px-4 py-2 text-sm text-on-surface-variant hover:bg-surface-container-highest hover:text-on-surface transition-colors">
                     <span className="material-symbols-outlined text-[18px]">bookmark</span>
                     Saved Schemes
                   </Link>
-                  <button onClick={() => { setIsProfileMenuOpen(false); alert("Settings coming soon!") }} className="w-full group flex items-center gap-3 px-4 py-2 text-sm text-on-surface-variant hover:bg-surface-container-highest hover:text-on-surface transition-colors">
+                  <Link to="/settings" onClick={() => setIsProfileMenuOpen(false)} className="group flex items-center gap-3 px-4 py-2 text-sm text-on-surface-variant hover:bg-surface-container-highest hover:text-on-surface transition-colors">
                     <span className="material-symbols-outlined text-[18px]">settings</span>
                     Settings
-                  </button>
+                  </Link>
                 </div>
                 <div className="py-1">
                   {user ? (

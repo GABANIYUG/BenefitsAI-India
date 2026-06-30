@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -37,10 +38,13 @@ export default function ProfilePage() {
     }
   });
 
+  const [isEditing, setIsEditing] = useState(false);
+
   const mutation = useMutation({
     mutationFn: (data: ProfileFormValues) => createProfile(data, token),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['profile'] });
+      setIsEditing(false);
       alert('Profile updated successfully!');
     }
   });
@@ -51,73 +55,113 @@ export default function ProfilePage() {
 
   if (isLoading) return <div className="p-8 text-center">Loading profile...</div>;
 
+  const currentValues = profile || {};
+
   return (
     <div className="py-8 max-w-2xl mx-auto w-full">
-      <h2 className="text-3xl font-display-lg font-bold text-on-surface mb-8">My Profile</h2>
+      <div className="flex justify-between items-center mb-8">
+        <h2 className="text-3xl font-display-lg font-bold text-on-surface">My Profile</h2>
+        <button 
+          onClick={() => setIsEditing(!isEditing)}
+          className={`px-4 py-2 rounded-lg font-bold text-sm transition-colors ${isEditing ? 'bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest' : 'bg-primary text-on-primary hover:bg-primary-container hover:text-on-primary-container glow-button shadow-[0_0_15px_rgba(176,198,255,0.4)]'}`}
+        >
+          {isEditing ? 'Cancel' : 'Edit Profile'}
+        </button>
+      </div>
       
       <div className="glass-panel p-6 rounded-2xl border border-outline-variant/10">
-        <p className="text-on-surface-variant mb-6 text-sm">
-          Complete your profile to get personalized scheme recommendations and eligibility checks.
-        </p>
-
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-on-surface mb-2">Age</label>
-              <input 
-                type="number" 
-                {...register("age", { valueAsNumber: true })}
-                className="w-full bg-surface-container-highest border border-outline-variant/30 rounded-lg p-3 text-on-surface focus:outline-none focus:border-primary"
-              />
-              {errors.age && <p className="text-red-400 text-xs mt-1">{errors.age.message}</p>}
+        {!isEditing ? (
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <p className="text-sm font-medium text-on-surface-variant mb-1">Age</p>
+                <p className="text-lg font-bold text-on-surface">{currentValues.age || 'Not provided'}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-on-surface-variant mb-1">State</p>
+                <p className="text-lg font-bold text-on-surface">{currentValues.state || 'Not provided'}</p>
+              </div>
+              <div className="md:col-span-2">
+                <p className="text-sm font-medium text-on-surface-variant mb-1">Annual Income (₹)</p>
+                <p className="text-lg font-bold text-on-surface">{currentValues.income ? `₹${currentValues.income.toLocaleString()}` : 'Not provided'}</p>
+              </div>
             </div>
             
-            <div>
-              <label className="block text-sm font-medium text-on-surface mb-2">State</label>
-              <input 
-                type="text" 
-                {...register("state")}
-                placeholder="e.g. Maharashtra"
-                className="w-full bg-surface-container-highest border border-outline-variant/30 rounded-lg p-3 text-on-surface focus:outline-none focus:border-primary"
-              />
-              {errors.state && <p className="text-red-400 text-xs mt-1">{errors.state.message}</p>}
-            </div>
-            
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-on-surface mb-2">Annual Income (₹)</label>
-              <input 
-                type="number" 
-                {...register("income", { valueAsNumber: true })}
-                className="w-full bg-surface-container-highest border border-outline-variant/30 rounded-lg p-3 text-on-surface focus:outline-none focus:border-primary"
-              />
-              {errors.income && <p className="text-red-400 text-xs mt-1">{errors.income.message}</p>}
+            <div className="pt-4 border-t border-outline-variant/10">
+              <h3 className="font-medium text-on-surface mb-3">Categories</h3>
+              <div className="flex gap-4">
+                {currentValues.isStudent && (
+                  <span className="px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-bold">Student</span>
+                )}
+                {currentValues.isFarmer && (
+                  <span className="px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-bold">Farmer</span>
+                )}
+                {!currentValues.isStudent && !currentValues.isFarmer && (
+                  <span className="text-on-surface-variant text-sm">No special categories selected.</span>
+                )}
+              </div>
             </div>
           </div>
+        ) : (
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-on-surface mb-2">Age</label>
+                <input 
+                  type="number" 
+                  {...register("age", { valueAsNumber: true })}
+                  className="w-full bg-surface-container-highest border border-outline-variant/30 rounded-lg p-3 text-on-surface focus:outline-none focus:border-primary"
+                />
+                {errors.age && <p className="text-red-400 text-xs mt-1">{errors.age.message}</p>}
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-on-surface mb-2">State</label>
+                <input 
+                  type="text" 
+                  {...register("state")}
+                  placeholder="e.g. Maharashtra"
+                  className="w-full bg-surface-container-highest border border-outline-variant/30 rounded-lg p-3 text-on-surface focus:outline-none focus:border-primary"
+                />
+                {errors.state && <p className="text-red-400 text-xs mt-1">{errors.state.message}</p>}
+              </div>
+              
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-on-surface mb-2">Annual Income (₹)</label>
+                <input 
+                  type="number" 
+                  {...register("income", { valueAsNumber: true })}
+                  className="w-full bg-surface-container-highest border border-outline-variant/30 rounded-lg p-3 text-on-surface focus:outline-none focus:border-primary"
+                />
+                {errors.income && <p className="text-red-400 text-xs mt-1">{errors.income.message}</p>}
+              </div>
+            </div>
 
-          <div className="space-y-4 pt-4 border-t border-outline-variant/10">
-            <h3 className="font-medium text-on-surface">Categories</h3>
-            
-            <label className="flex items-center gap-3 cursor-pointer p-3 rounded-lg hover:bg-surface-container-highest transition-colors">
-              <input type="checkbox" {...register("isStudent")} className="w-5 h-5 accent-primary" />
-              <span className="text-on-surface">I am a Student</span>
-            </label>
-            
-            <label className="flex items-center gap-3 cursor-pointer p-3 rounded-lg hover:bg-surface-container-highest transition-colors">
-              <input type="checkbox" {...register("isFarmer")} className="w-5 h-5 accent-primary" />
-              <span className="text-on-surface">I am a Farmer</span>
-            </label>
-          </div>
+            <div className="space-y-4 pt-4 border-t border-outline-variant/10">
+              <h3 className="font-medium text-on-surface">Categories</h3>
+              
+              <label className="flex items-center gap-3 cursor-pointer p-3 rounded-lg hover:bg-surface-container-highest transition-colors">
+                <input type="checkbox" {...register("isStudent")} className="w-5 h-5 accent-primary" />
+                <span className="text-on-surface">I am a Student</span>
+              </label>
+              
+              <label className="flex items-center gap-3 cursor-pointer p-3 rounded-lg hover:bg-surface-container-highest transition-colors">
+                <input type="checkbox" {...register("isFarmer")} className="w-5 h-5 accent-primary" />
+                <span className="text-on-surface">I am a Farmer</span>
+              </label>
+            </div>
 
-          <div className="pt-6">
-            <button 
-              type="submit" 
-              disabled={mutation.isPending}
-              className="w-full glow-button bg-primary text-on-primary py-3 rounded-xl font-bold shadow-[0_0_15px_rgba(176,198,255,0.4)] hover:shadow-[0_0_25px_rgba(176,198,255,0.6)] disabled:opacity-50"
-            >
-              {mutation.isPending ? 'Saving...' : 'Save Profile'}
-            </button>
-          </div>
-        </form>
+            <div className="pt-6">
+              <button 
+                type="submit" 
+                disabled={mutation.isPending}
+                className="w-full glow-button bg-primary text-on-primary py-3 rounded-xl font-bold shadow-[0_0_15px_rgba(176,198,255,0.4)] hover:shadow-[0_0_25px_rgba(176,198,255,0.6)] disabled:opacity-50"
+              >
+                {mutation.isPending ? 'Saving...' : 'Save Profile'}
+              </button>
+            </div>
+          </form>
+        )}
       </div>
     </div>
   )

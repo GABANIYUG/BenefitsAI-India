@@ -36,11 +36,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const login = async () => {
-    // For now we can implement Google OAuth or direct to an auth page
-    // Using Google OAuth as default example
-    await supabase.auth.signInWithOAuth({
-      provider: 'google',
-    });
+    const email = window.prompt("Enter your email to login via Magic Link:");
+    if (email) {
+      const { error } = await supabase.auth.signInWithOtp({ email });
+      if (error) {
+        alert("Login error: " + error.message);
+      } else {
+        alert("Magic link sent! Please check your email to complete login.");
+      }
+    }
   };
 
   const logout = async () => {
