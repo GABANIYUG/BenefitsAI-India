@@ -1,17 +1,36 @@
-import { Outlet, Link } from "react-router-dom"
+import { Outlet, Link, useNavigate } from "react-router-dom"
 import { useState, useRef, useEffect } from "react"
+import { useAuth } from "../contexts/AuthContext"
+
+// Mock notifications (would normally come from DB)
+const MOCK_NOTIFICATIONS = [
+  { id: 1, title: "New Scheme Launched", message: "PM KISAN scheme updated with new benefits.", time: "10 mins ago", isUnread: true },
+  { id: 2, title: "Application Status", message: "Your application for Crop Insurance was approved.", time: "2 hours ago", isUnread: false }
+]
 
 export default function MainLayout() {
+  const { user, login } = useAuth()
+  const navigate = useNavigate()
+
   const [lang, setLang] = useState('EN')
   const [isLangMenuOpen, setIsLangMenuOpen] = useState(false)
-  const [voiceActive, setVoiceActive] = useState(false)
-  const [showNotifications, setShowNotifications] = useState(false)
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false)
+  const [isNotificationsMenuOpen, setIsNotificationsMenuOpen] = useState(false)
+  
   const langMenuRef = useRef<HTMLDivElement>(null)
+  const profileMenuRef = useRef<HTMLDivElement>(null)
+  const notificationsMenuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (langMenuRef.current && !langMenuRef.current.contains(event.target as Node)) {
         setIsLangMenuOpen(false)
+      }
+      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
+        setIsProfileMenuOpen(false)
+      }
+      if (notificationsMenuRef.current && !notificationsMenuRef.current.contains(event.target as Node)) {
+        setIsNotificationsMenuOpen(false)
       }
     }
     document.addEventListener("mousedown", handleClickOutside)
@@ -23,12 +42,11 @@ export default function MainLayout() {
     setIsLangMenuOpen(false)
   }
 
-  const handleVoiceToggle = () => {
-    setVoiceActive(!voiceActive)
-  }
-
-  const handleNotificationsToggle = () => {
-    setShowNotifications(!showNotifications)
+  const handleCopilotClick = (e: React.MouseEvent) => {
+    if (!user) {
+      e.preventDefault()
+      login() // Trigger login flow if not authenticated
+    }
   }
 
   return (
@@ -39,7 +57,7 @@ export default function MainLayout() {
         </Link>
         <nav className="hidden md:flex gap-6">
           <Link to="/" className="text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors duration-200 px-3 py-2 rounded-lg font-label-sm text-label-sm">Home</Link>
-          <Link to="/copilot" className="text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors duration-200 px-3 py-2 rounded-lg font-label-sm text-label-sm">Copilot</Link>
+          <Link onClick={handleCopilotClick} to="/copilot" className="text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors duration-200 px-3 py-2 rounded-lg font-label-sm text-label-sm">Copilot</Link>
         </nav>
         <div className="flex items-center gap-4">
           <div className="relative" ref={langMenuRef}>
@@ -67,16 +85,84 @@ export default function MainLayout() {
               </div>
             )}
           </div>
-          <button onClick={handleVoiceToggle} aria-label="settings_voice" className={`text-on-surface-variant hover:bg-surface-container-high transition-colors duration-200 p-2 rounded-full ${voiceActive ? 'text-primary bg-primary/10' : ''}`}>
-            <span className="material-symbols-outlined">settings_voice</span>
-          </button>
-          <button onClick={handleNotificationsToggle} aria-label="notifications" className="text-on-surface-variant hover:bg-surface-container-high transition-colors duration-200 p-2 rounded-full relative">
-            <span className="material-symbols-outlined">notifications</span>
-          </button>
-          <Link to="/profile" className="w-10 h-10 rounded-full bg-surface-container-highest overflow-hidden border border-outline-variant/30 hover:border-primary/50 transition-colors cursor-pointer">
-            {/* Placeholder avatar */}
-            <div className="w-full h-full bg-primary/20 flex items-center justify-center text-primary font-bold">U</div>
-          </Link>
+
+          <div className="relative" ref={notificationsMenuRef}>
+            <button onClick={() => setIsNotificationsMenuOpen(!isNotificationsMenuOpen)} aria-label="notifications" className="text-on-surface-variant hover:bg-surface-container-high transition-colors duration-200 p-2 rounded-full relative">
+              <span className="material-symbols-outlined">notifications</span>
+              {MOCK_NOTIFICATIONS.some(n => n.isUnread) && (
+                <span className="absolute top-1 right-2 w-2 h-2 bg-red-500 rounded-full"></span>
+              )}
+            </button>
+            
+            {isNotificationsMenuOpen && (
+              <div className="absolute right-0 mt-2 w-80 rounded-xl shadow-lg bg-surface-container-low border border-outline-variant/20 focus:outline-none z-50 overflow-hidden">
+                <div className="p-4 border-b border-outline-variant/10">
+                  <h3 className="font-bold text-on-surface">Notifications</h3>
+                </div>
+                <div className="max-h-[300px] overflow-y-auto">
+                  {MOCK_NOTIFICATIONS.length > 0 ? (
+                    <div className="divide-y divide-outline-variant/10">
+                      {MOCK_NOTIFICATIONS.map(notification => (
+                        <div key={notification.id} className={`p-4 hover:bg-surface-container-highest transition-colors cursor-pointer ${notification.isUnread ? 'bg-primary/5' : ''}`}>
+                          <div className="flex justify-between items-start mb-1">
+                            <h4 className={`text-sm ${notification.isUnread ? 'font-bold text-primary' : 'font-medium text-on-surface'}`}>{notification.title}</h4>
+                            <span className="text-[10px] text-on-surface-variant">{notification.time}</span>
+                          </div>
+                          <p className="text-xs text-on-surface-variant">{notification.message}</p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="p-8 text-center text-on-surface-variant text-sm">
+                      No notifications
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="relative" ref={profileMenuRef}>
+            <button onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)} className="w-10 h-10 rounded-full bg-surface-container-highest overflow-hidden border border-outline-variant/30 hover:border-primary/50 transition-colors cursor-pointer block">
+              <div className="w-full h-full bg-primary/20 flex items-center justify-center text-primary font-bold">U</div>
+            </button>
+
+            {isProfileMenuOpen && (
+              <div className="absolute right-0 mt-2 w-56 rounded-xl shadow-lg bg-surface-container-low border border-outline-variant/20 divide-y divide-outline-variant/10 focus:outline-none z-50 overflow-hidden">
+                <div className="px-4 py-3">
+                  <p className="text-sm font-medium text-on-surface">Signed in as</p>
+                  <p className="text-xs text-on-surface-variant truncate">{user?.email || 'Guest User'}</p>
+                </div>
+                <div className="py-1">
+                  <Link to="/profile" onClick={() => setIsProfileMenuOpen(false)} className="group flex items-center gap-3 px-4 py-2 text-sm text-on-surface-variant hover:bg-surface-container-highest hover:text-on-surface transition-colors">
+                    <span className="material-symbols-outlined text-[18px]">person</span>
+                    My Profile
+                  </Link>
+                  <Link to="/schemes" onClick={() => setIsProfileMenuOpen(false)} className="group flex items-center gap-3 px-4 py-2 text-sm text-on-surface-variant hover:bg-surface-container-highest hover:text-on-surface transition-colors">
+                    <span className="material-symbols-outlined text-[18px]">bookmark</span>
+                    Saved Schemes
+                  </Link>
+                  <button onClick={() => { setIsProfileMenuOpen(false); alert("Settings coming soon!") }} className="w-full group flex items-center gap-3 px-4 py-2 text-sm text-on-surface-variant hover:bg-surface-container-highest hover:text-on-surface transition-colors">
+                    <span className="material-symbols-outlined text-[18px]">settings</span>
+                    Settings
+                  </button>
+                </div>
+                <div className="py-1">
+                  {user ? (
+                    <button onClick={() => { setIsProfileMenuOpen(false); /* logout() */ }} className="w-full group flex items-center gap-3 px-4 py-2 text-sm text-red-500 hover:bg-red-500/10 transition-colors">
+                      <span className="material-symbols-outlined text-[18px]">logout</span>
+                      Logout
+                    </button>
+                  ) : (
+                    <button onClick={() => { setIsProfileMenuOpen(false); login() }} className="w-full group flex items-center gap-3 px-4 py-2 text-sm text-primary hover:bg-primary/10 transition-colors">
+                      <span className="material-symbols-outlined text-[18px]">login</span>
+                      Login
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </header>
       

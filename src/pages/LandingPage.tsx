@@ -6,6 +6,7 @@ import { useAuth } from "../contexts/AuthContext"
 
 export default function LandingPage() {
   const [query, setQuery] = useState("");
+  const [isListening, setIsListening] = useState(false);
   const navigate = useNavigate();
   const { user, login } = useAuth();
 
@@ -21,6 +22,36 @@ export default function LandingPage() {
       navigate('/copilot');
     }
   }
+
+  const startListening = () => {
+    // @ts-ignore - SpeechRecognition is not fully typed in standard TS yet
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert("Your browser does not support voice search. Please use Google Chrome or Edge.");
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'en-IN';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    recognition.onstart = () => setIsListening(true);
+    
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript;
+      setQuery(transcript);
+    };
+
+    recognition.onerror = (event: any) => {
+      console.error("Speech recognition error", event.error);
+      setIsListening(false);
+    };
+
+    recognition.onend = () => setIsListening(false);
+
+    recognition.start();
+  };
 
   return (
     <>
@@ -50,10 +81,15 @@ export default function LandingPage() {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 className="flex-grow bg-transparent border-none focus:ring-0 text-on-surface placeholder:text-outline h-12 font-body-md text-body-md focus:outline-none" 
-                placeholder="I am a farmer from Maharashtra looking for subsidies..." 
+                placeholder={isListening ? "Listening..." : "I am a farmer from Maharashtra looking for subsidies..."} 
                 type="text"
               />
-              <button type="button" aria-label="Voice Input" className="p-3 text-primary hover:text-primary-container transition-colors glow-button bg-surface-container-high rounded-full mr-2">
+              <button 
+                type="button" 
+                onClick={startListening}
+                aria-label="Voice Input" 
+                className={`p-3 transition-all glow-button rounded-full mr-2 ${isListening ? 'bg-red-500/20 text-red-500 animate-pulse' : 'bg-surface-container-high text-primary hover:text-primary-container'}`}
+              >
                 <span className="material-symbols-outlined">mic</span>
               </button>
               <button type="submit" className="glow-button bg-primary text-on-primary font-label-sm text-label-sm px-8 h-12 rounded-full font-bold shadow-[0_0_15px_rgba(176,198,255,0.4)] transition-all hover:shadow-[0_0_25px_rgba(176,198,255,0.6)]">
