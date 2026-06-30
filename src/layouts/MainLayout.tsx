@@ -1,4 +1,4 @@
-import { Outlet, Link, useNavigate } from "react-router-dom"
+import { Outlet, Link } from "react-router-dom"
 import { useState, useRef, useEffect } from "react"
 import { useAuth } from "../contexts/AuthContext"
 
@@ -10,8 +10,6 @@ const MOCK_NOTIFICATIONS = [
 
 export default function MainLayout() {
   const { user, login } = useAuth()
-  const navigate = useNavigate()
-
   const [lang, setLang] = useState('EN')
   const [isLangMenuOpen, setIsLangMenuOpen] = useState(false)
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false)
