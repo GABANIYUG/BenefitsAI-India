@@ -1,24 +1,34 @@
 import { Outlet, Link } from "react-router-dom"
-import { useState } from "react"
+import { useState, useRef, useEffect } from "react"
 
 export default function MainLayout() {
   const [lang, setLang] = useState('EN')
+  const [isLangMenuOpen, setIsLangMenuOpen] = useState(false)
   const [voiceActive, setVoiceActive] = useState(false)
   const [showNotifications, setShowNotifications] = useState(false)
+  const langMenuRef = useRef<HTMLDivElement>(null)
 
-  const handleLanguageToggle = () => {
-    setLang(lang === 'EN' ? 'HI' : 'EN')
-    alert(`Language changed to ${lang === 'EN' ? 'Hindi' : 'English'}`)
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (langMenuRef.current && !langMenuRef.current.contains(event.target as Node)) {
+        setIsLangMenuOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
+
+  const handleLanguageSelect = (selectedLang: string) => {
+    setLang(selectedLang)
+    setIsLangMenuOpen(false)
   }
 
   const handleVoiceToggle = () => {
     setVoiceActive(!voiceActive)
-    alert(voiceActive ? 'Voice assistant deactivated' : 'Voice assistant activated')
   }
 
   const handleNotificationsToggle = () => {
     setShowNotifications(!showNotifications)
-    if (!showNotifications) alert('No new notifications at this time.')
   }
 
   return (
@@ -32,10 +42,31 @@ export default function MainLayout() {
           <Link to="/copilot" className="text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors duration-200 px-3 py-2 rounded-lg font-label-sm text-label-sm">Copilot</Link>
         </nav>
         <div className="flex items-center gap-4">
-          <button onClick={handleLanguageToggle} aria-label="language" className="text-on-surface-variant hover:bg-surface-container-high transition-colors duration-200 p-2 rounded-full relative">
-            <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 0" }}>language</span>
-            <span className="absolute -top-1 -right-1 bg-surface-container-highest text-[10px] px-1 rounded font-bold">{lang}</span>
-          </button>
+          <div className="relative" ref={langMenuRef}>
+            <button onClick={() => setIsLangMenuOpen(!isLangMenuOpen)} aria-label="language" className="text-on-surface-variant hover:bg-surface-container-high transition-colors duration-200 p-2 rounded-full relative">
+              <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 0" }}>language</span>
+              <span className="absolute -top-1 -right-1 bg-surface-container-highest text-[10px] px-1 rounded font-bold">{lang}</span>
+            </button>
+            
+            {isLangMenuOpen && (
+              <div className="absolute right-0 mt-2 w-48 rounded-xl shadow-lg bg-surface-container-low border border-outline-variant/20 divide-y divide-outline-variant/10 focus:outline-none z-50 overflow-hidden">
+                <div className="py-1">
+                  <button onClick={() => handleLanguageSelect('EN')} className={`group flex items-center px-4 py-3 text-sm w-full text-left hover:bg-surface-container-highest hover:text-primary transition-colors ${lang === 'EN' ? 'text-primary font-bold bg-primary/5' : 'text-on-surface-variant'}`}>
+                    English (EN)
+                  </button>
+                  <button onClick={() => handleLanguageSelect('HI')} className={`group flex items-center px-4 py-3 text-sm w-full text-left hover:bg-surface-container-highest hover:text-primary transition-colors ${lang === 'HI' ? 'text-primary font-bold bg-primary/5' : 'text-on-surface-variant'}`}>
+                    हिंदी (HI)
+                  </button>
+                  <button onClick={() => handleLanguageSelect('GU')} className={`group flex items-center px-4 py-3 text-sm w-full text-left hover:bg-surface-container-highest hover:text-primary transition-colors ${lang === 'GU' ? 'text-primary font-bold bg-primary/5' : 'text-on-surface-variant'}`}>
+                    ગુજરાતી (GU)
+                  </button>
+                  <button onClick={() => handleLanguageSelect('MR')} className={`group flex items-center px-4 py-3 text-sm w-full text-left hover:bg-surface-container-highest hover:text-primary transition-colors ${lang === 'MR' ? 'text-primary font-bold bg-primary/5' : 'text-on-surface-variant'}`}>
+                    मराठी (MR)
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
           <button onClick={handleVoiceToggle} aria-label="settings_voice" className={`text-on-surface-variant hover:bg-surface-container-high transition-colors duration-200 p-2 rounded-full ${voiceActive ? 'text-primary bg-primary/10' : ''}`}>
             <span className="material-symbols-outlined">settings_voice</span>
           </button>
