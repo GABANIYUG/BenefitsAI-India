@@ -5,9 +5,12 @@ import type { Session, User } from '@supabase/supabase-js';
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: () => void; // This will just trigger OAuth or we can update it if they have email/pass UI
+  login: () => void; 
   logout: () => Promise<void>;
   token: string | null;
+  isAuthModalOpen: boolean;
+  openAuthModal: () => void;
+  closeAuthModal: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -16,6 +19,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   useEffect(() => {
     // Get initial session
@@ -35,17 +39,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const login = async () => {
-    const email = window.prompt("Enter your email to login via Magic Link:");
-    if (email) {
-      const { error } = await supabase.auth.signInWithOtp({ email });
-      if (error) {
-        alert("Login error: " + error.message);
-      } else {
-        alert("Magic link sent! Please check your email to complete login.");
-      }
-    }
+  const login = () => {
+    setIsAuthModalOpen(true);
   };
+
+  const openAuthModal = () => setIsAuthModalOpen(true);
+  const closeAuthModal = () => setIsAuthModalOpen(false);
 
   const logout = async () => {
     await supabase.auth.signOut();
@@ -57,7 +56,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       loading, 
       login, 
       logout, 
-      token: session?.access_token ?? null 
+      token: session?.access_token ?? null,
+      isAuthModalOpen,
+      openAuthModal,
+      closeAuthModal
     }}>
       {children}
     </AuthContext.Provider>

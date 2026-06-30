@@ -7,6 +7,7 @@ import SchemesPage from "./pages/SchemesPage"
 import ProfilePage from "./pages/ProfilePage"
 import SettingsPage from "./pages/SettingsPage"
 import SavedSchemesPage from "./pages/SavedSchemesPage"
+import AuthModal from "./components/AuthModal"
 
 function App() {
   return (
@@ -25,6 +26,7 @@ function App() {
           <Route path="/schemes/saved" element={<SavedSchemesPage />} />
         </Route>
       </Routes>
+      <AuthModal />
     </Router>
   )
 }

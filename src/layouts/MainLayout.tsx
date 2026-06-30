@@ -9,7 +9,7 @@ const MOCK_NOTIFICATIONS = [
 ]
 
 export default function MainLayout() {
-  const { user, login } = useAuth()
+  const { user, login, logout } = useAuth()
   const [lang, setLang] = useState('EN')
   const [isLangMenuOpen, setIsLangMenuOpen] = useState(false)
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false)
@@ -145,7 +145,7 @@ export default function MainLayout() {
                 </div>
                 <div className="py-1">
                   {user ? (
-                    <button onClick={() => { setIsProfileMenuOpen(false); /* logout() */ }} className="w-full group flex items-center gap-3 px-4 py-2 text-sm text-red-500 hover:bg-red-500/10 transition-colors">
+                    <button onClick={() => { setIsProfileMenuOpen(false); logout(); }} className="w-full group flex items-center gap-3 px-4 py-2 text-sm text-red-500 hover:bg-red-500/10 transition-colors">
                       <span className="material-symbols-outlined text-[18px]">logout</span>
                       Logout
                     </button>
