@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from "react"
 import OrbShader from "../components/canvas/OrbShader"
 import { useMutation } from "@tanstack/react-query"
-import { sendCopilotMessage } from "../services/copilot.service"
 import { useAuth } from "../contexts/AuthContext"
 import { useLocation } from "react-router-dom"
 import { useTranslation } from "react-i18next"
