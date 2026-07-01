@@ -51,8 +51,9 @@ export default function CopilotPage() {
         schemes: foundSchemes
       }]);
     },
-    onError: () => {
-      setMessages(prev => [...prev, { id: Date.now().toString(), role: 'assistant', content: "Sorry, I encountered an error connecting to the AI. Please try again later." }]);
+    onError: (err: any) => {
+      const errMsg = err?.message || "Unknown error";
+      setMessages(prev => [...prev, { id: Date.now().toString(), role: 'assistant', content: `Sorry, I encountered an error connecting to the AI: ${errMsg}` }]);
     }
   });
 

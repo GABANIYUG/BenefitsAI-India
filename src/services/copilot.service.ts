@@ -15,7 +15,12 @@ export const sendCopilotMessage = async (message: string, token: string | null, 
     });
 
     if (!res.ok) {
-      throw new Error(`Edge function error: ${res.statusText}`);
+      let errorMsg = `Edge function error: ${res.statusText}`;
+      try {
+        const errData = await res.json();
+        if (errData.error) errorMsg = errData.error;
+      } catch (e) {}
+      throw new Error(errorMsg);
     }
 
     const data = await res.json();
