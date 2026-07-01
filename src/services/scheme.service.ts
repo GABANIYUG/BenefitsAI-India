@@ -1,25 +1,43 @@
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+import { supabase } from '../lib/supabase';
+
+const N8N_ELIGIBILITY_WEBHOOK = import.meta.env.VITE_N8N_ELIGIBILITY_WEBHOOK_URL;
 
 export const getSchemes = async (token: string | null, lang: string = 'EN') => {
-  const res = await fetch(`${SUPABASE_URL}/functions/v1/get-schemes?lang=${lang}`, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token || SUPABASE_ANON_KEY}`
-    }
-  });
-  return res.json();
+  const { data, error } = await supabase.from('schemes').select('*');
+  if (error) throw error;
+  
+  return { success: true, data };
 };
 
 export const getEligibleSchemes = async (token: string | null, lang: string = 'EN') => {
-  const res = await fetch(`${SUPABASE_URL}/functions/v1/get-schemes?lang=${lang}&eligible=true`, {
-    method: 'GET',
+  if (!N8N_ELIGIBILITY_WEBHOOK) {
+    console.warn("N8N_ELIGIBILITY_WEBHOOK_URL is not set.");
+    return { success: true, data: [] };
+  }
+
+  // Fetch the user's profile to send to n8n
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+  
+  const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+  
+  // Also fetch all schemes to send to n8n for evaluation
+  const { data: schemes } = await supabase.from('schemes').select('*');
+
+  const res = await fetch(N8N_ELIGIBILITY_WEBHOOK, {
+    method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token || SUPABASE_ANON_KEY}`
-    }
+      'Authorization': `Bearer ${token}`
+    },
+    body: JSON.stringify({
+      profile: profile || {},
+      schemes: schemes || [],
+      language: lang
+    })
   });
+  
+  // Assuming n8n returns { success: true, data: [...] }
   return res.json();
 };
 

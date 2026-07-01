@@ -39,10 +39,32 @@ export default function CopilotPage() {
   }, [messages])
 
   const mutation = useMutation({
-    mutationFn: (msg: string) => sendCopilotMessage(msg, token, i18n.language),
+    mutationFn: async (msg: string) => {
+      const N8N_CHAT_WEBHOOK = import.meta.env.VITE_N8N_CHAT_WEBHOOK_URL;
+      
+      if (!N8N_CHAT_WEBHOOK) {
+        throw new Error("N8N Chat Webhook URL is not configured.");
+      }
+
+      const res = await fetch(N8N_CHAT_WEBHOOK, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ 
+          query: msg,
+          language: i18n.language,
+          history: messages
+        })
+      });
+
+      if (!res.ok) throw new Error("Failed to connect to AI service");
+      return res.json();
+    },
     onSuccess: (data) => {
       const foundSchemes = data.schemes || [];
-      const replyContent = data.response || "I couldn't find any specific schemes matching your exact request right now. Try adjusting your search terms!";
+      const replyContent = data.output || data.response || "I couldn't find any specific schemes matching your exact request right now. Try adjusting your search terms!";
         
       setMessages(prev => [...prev, { 
         id: Date.now().toString(), 
