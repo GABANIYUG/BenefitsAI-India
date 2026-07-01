@@ -3,7 +3,7 @@
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-export const sendCopilotMessage = async (message: string, token: string | null) => {
+export const sendCopilotMessage = async (message: string, token: string | null, language: string = 'EN') => {
   try {
     const res = await fetch(`${SUPABASE_URL}/functions/v1/search-schemes`, {
       method: 'POST',
@@ -11,7 +11,7 @@ export const sendCopilotMessage = async (message: string, token: string | null) 
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token || SUPABASE_ANON_KEY}`
       },
-      body: JSON.stringify({ query: message })
+      body: JSON.stringify({ query: message, language })
     });
 
     if (!res.ok) {

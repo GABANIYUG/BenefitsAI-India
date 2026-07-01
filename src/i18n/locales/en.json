@@ -1,0 +1,20 @@
+{
+  "nav": {
+    "home": "Home",
+    "copilot": "Copilot",
+    "signIn": "Sign In",
+    "notifications": "Notifications",
+    "language": "Language"
+  },
+  "hero": {
+    "title1": "Discover Every Government",
+    "title2": "Benefit You're Eligible For.",
+    "subtitle": "AI-powered benefit discovery for every Indian citizen. Secure, multilingual, and frictionless access to your entitlements.",
+    "searchPlaceholder": "I am a farmer from Maharashtra looking for subsidies...",
+    "discoverBtn": "Discover"
+  },
+  "copilot": {
+    "placeholder": "Ask Copilot...",
+    "searchBtn": "Search"
+  }
+}

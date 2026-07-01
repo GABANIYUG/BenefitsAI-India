@@ -1,6 +1,7 @@
 import { Outlet, Link } from "react-router-dom"
 import { useState, useRef, useEffect } from "react"
 import { useAuth } from "../contexts/AuthContext"
+import { useTranslation } from "react-i18next"
 
 // Mock notifications (would normally come from DB)
 const MOCK_NOTIFICATIONS = [
@@ -10,7 +11,8 @@ const MOCK_NOTIFICATIONS = [
 
 export default function MainLayout() {
   const { user, login, logout } = useAuth()
-  const [lang, setLang] = useState('EN')
+  const { t, i18n } = useTranslation()
+  const [lang, setLang] = useState(i18n.language.toUpperCase() || 'EN')
   const [isLangMenuOpen, setIsLangMenuOpen] = useState(false)
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false)
   const [isNotificationsMenuOpen, setIsNotificationsMenuOpen] = useState(false)
@@ -37,6 +39,7 @@ export default function MainLayout() {
 
   const handleLanguageSelect = (selectedLang: string) => {
     setLang(selectedLang)
+    i18n.changeLanguage(selectedLang)
     setIsLangMenuOpen(false)
   }
 
@@ -52,8 +55,8 @@ export default function MainLayout() {
           BenefitAI India
         </Link>
         <nav className="hidden md:flex gap-6">
-          <Link to="/" className="text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors duration-200 px-3 py-2 rounded-lg font-label-sm text-label-sm">Home</Link>
-          <Link onClick={handleCopilotClick} to="/copilot" className="text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors duration-200 px-3 py-2 rounded-lg font-label-sm text-label-sm">Copilot</Link>
+          <Link to="/" className="text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors duration-200 px-3 py-2 rounded-lg font-label-sm text-label-sm">{t('nav.home')}</Link>
+          <Link onClick={handleCopilotClick} to="/copilot" className="text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors duration-200 px-3 py-2 rounded-lg font-label-sm text-label-sm">{t('nav.copilot')}</Link>
         </nav>
         <div className="flex items-center gap-4">
           <div className="relative" ref={langMenuRef}>
@@ -74,9 +77,6 @@ export default function MainLayout() {
                   <button onClick={() => handleLanguageSelect('GU')} className={`group flex items-center px-4 py-3 text-sm w-full text-left hover:bg-surface-container-highest hover:text-primary transition-colors ${lang === 'GU' ? 'text-primary font-bold bg-primary/5' : 'text-on-surface-variant'}`}>
                     ગુજરાતી (GU)
                   </button>
-                  <button onClick={() => handleLanguageSelect('MR')} className={`group flex items-center px-4 py-3 text-sm w-full text-left hover:bg-surface-container-highest hover:text-primary transition-colors ${lang === 'MR' ? 'text-primary font-bold bg-primary/5' : 'text-on-surface-variant'}`}>
-                    मराठी (MR)
-                  </button>
                 </div>
               </div>
             )}
@@ -93,7 +93,7 @@ export default function MainLayout() {
             {isNotificationsMenuOpen && (
               <div className="absolute right-0 mt-2 w-80 rounded-xl shadow-lg bg-surface-container-low border border-outline-variant/20 focus:outline-none z-50 overflow-hidden">
                 <div className="p-4 border-b border-outline-variant/10">
-                  <h3 className="font-bold text-on-surface">Notifications</h3>
+                  <h3 className="font-bold text-on-surface">{t('nav.notifications')}</h3>
                 </div>
                 <div className="max-h-[300px] overflow-y-auto">
                   {MOCK_NOTIFICATIONS.length > 0 ? (
@@ -118,47 +118,35 @@ export default function MainLayout() {
             )}
           </div>
 
-          <div className="relative" ref={profileMenuRef}>
-            <button onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)} className="w-10 h-10 rounded-full bg-surface-container-highest overflow-hidden border border-outline-variant/30 hover:border-primary/50 transition-colors cursor-pointer block">
-              <div className="w-full h-full bg-primary/20 flex items-center justify-center text-primary font-bold">U</div>
+          {user ? (
+            <div className="relative" ref={profileMenuRef}>
+              <button onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)} className="w-10 h-10 rounded-full bg-primary/10 text-primary font-bold flex items-center justify-center hover:bg-primary/20 transition-colors">
+                {user.email?.[0].toUpperCase() || 'U'}
+              </button>
+              
+              {isProfileMenuOpen && (
+                <div className="absolute right-0 mt-2 w-48 rounded-xl shadow-lg bg-surface-container-low border border-outline-variant/20 divide-y divide-outline-variant/10 focus:outline-none z-50 overflow-hidden">
+                  <div className="px-4 py-3">
+                    <p className="text-sm font-medium text-on-surface truncate">{user.email}</p>
+                  </div>
+                  <div className="py-1">
+                    <Link onClick={() => setIsProfileMenuOpen(false)} to="/profile" className="group flex items-center px-4 py-2 text-sm text-on-surface-variant hover:bg-surface-container-highest hover:text-primary transition-colors">
+                      <span className="material-symbols-outlined mr-3 text-[18px]">person</span>
+                      Profile
+                    </Link>
+                    <button onClick={() => { logout(); setIsProfileMenuOpen(false) }} className="group flex w-full items-center px-4 py-2 text-sm text-error hover:bg-error/10 transition-colors">
+                      <span className="material-symbols-outlined mr-3 text-[18px]">logout</span>
+                      Sign Out
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <button onClick={login} className="bg-primary text-on-primary hover:opacity-90 transition-opacity px-6 py-2 rounded-full font-label-md font-bold shadow-md shadow-primary/20">
+              {t('nav.signIn')}
             </button>
-
-            {isProfileMenuOpen && (
-              <div className="absolute right-0 mt-2 w-56 rounded-xl shadow-lg bg-surface-container-low border border-outline-variant/20 divide-y divide-outline-variant/10 focus:outline-none z-50 overflow-hidden">
-                <div className="px-4 py-3">
-                  <p className="text-sm font-medium text-on-surface">Signed in as</p>
-                  <p className="text-xs text-on-surface-variant truncate">{user?.email || 'Guest User'}</p>
-                </div>
-                <div className="py-1">
-                  <Link to="/profile" onClick={() => setIsProfileMenuOpen(false)} className="group flex items-center gap-3 px-4 py-2 text-sm text-on-surface-variant hover:bg-surface-container-highest hover:text-on-surface transition-colors">
-                    <span className="material-symbols-outlined text-[18px]">person</span>
-                    My Profile
-                  </Link>
-                  <Link to="/schemes/saved" onClick={() => setIsProfileMenuOpen(false)} className="group flex items-center gap-3 px-4 py-2 text-sm text-on-surface-variant hover:bg-surface-container-highest hover:text-on-surface transition-colors">
-                    <span className="material-symbols-outlined text-[18px]">bookmark</span>
-                    Saved Schemes
-                  </Link>
-                  <Link to="/settings" onClick={() => setIsProfileMenuOpen(false)} className="group flex items-center gap-3 px-4 py-2 text-sm text-on-surface-variant hover:bg-surface-container-highest hover:text-on-surface transition-colors">
-                    <span className="material-symbols-outlined text-[18px]">settings</span>
-                    Settings
-                  </Link>
-                </div>
-                <div className="py-1">
-                  {user ? (
-                    <button onClick={() => { setIsProfileMenuOpen(false); logout(); }} className="w-full group flex items-center gap-3 px-4 py-2 text-sm text-red-500 hover:bg-red-500/10 transition-colors">
-                      <span className="material-symbols-outlined text-[18px]">logout</span>
-                      Logout
-                    </button>
-                  ) : (
-                    <button onClick={() => { setIsProfileMenuOpen(false); login() }} className="w-full group flex items-center gap-3 px-4 py-2 text-sm text-primary hover:bg-primary/10 transition-colors">
-                      <span className="material-symbols-outlined text-[18px]">login</span>
-                      Login
-                    </button>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
+          )}
         </div>
       </header>
       

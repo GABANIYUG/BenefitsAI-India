@@ -3,6 +3,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
+import { GoogleGenerativeAI } from 'npm:@google/generative-ai'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -16,51 +17,79 @@ serve(async (req) => {
   }
 
   try {
-    const { query } = await req.json()
-    if (!query) throw new Error("Query is required")
+    const { query, language = 'EN' } = await req.json()
+    
+    if (!query) {
+      return new Response(JSON.stringify({ error: 'Query is required' }), { 
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      })
+    }
 
-    // 1. Get the Gemini API Key from environment variables securely
     const geminiApiKey = Deno.env.get('GEMINI_API_KEY')
     if (!geminiApiKey) throw new Error("GEMINI_API_KEY is not set")
 
-    // 2. Call Gemini API to generate the vector embedding
-    const geminiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-2:embedContent?key=${geminiApiKey}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: "models/gemini-embedding-2",
-        content: { parts: [{ text: query }] },
-        outputDimensionality: 1536
-      })
-    })
-    
-    const geminiData = await geminiRes.json()
-    const embedding = geminiData.embedding.values // This is the mathematical vector [0.01, -0.05, ...]
+    const genAI = new GoogleGenerativeAI(geminiApiKey)
 
-    // 3. Connect to Supabase to search the database
-    const supabaseClient = createClient(
+    // 1. Generate embedding for the user's query
+    const model = genAI.getGenerativeModel({ model: "text-embedding-004" })
+    const embeddingResult = await model.embedContent(query)
+    const embedding = embeddingResult.embedding.values
+
+    // 2. Search Supabase using match_schemes RPC
+    const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? ''
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { Authorization: req.headers.get('Authorization')! } } }
     )
 
-    // 4. Call our match_schemes SQL function
-    const { data: schemes, error } = await supabaseClient.rpc('match_schemes', {
+    const { data: schemes, error } = await supabase.rpc('match_schemes', {
       query_embedding: embedding,
-      match_threshold: 0.7, // Adjust this threshold (0.0 to 1.0) to make it more/less strict
-      match_count: 5 // Return top 5 schemes
+      match_threshold: 0.70, // Relaxed threshold to catch more
+      match_count: 5
     })
 
-    if (error) throw error
+    if (error) {
+      console.error('Supabase search error:', error)
+      throw error
+    }
 
-    // 5. Return the matching schemes to your React frontend!
-    return new Response(JSON.stringify({ schemes }), {
+    // Prepare prompt context based on language
+    const langMap: Record<string, string> = {
+      'EN': 'English',
+      'HI': 'Hindi',
+      'GU': 'Gujarati',
+    }
+    const targetLanguage = langMap[language.toUpperCase()] || 'English'
+
+    const schemeContext = schemes && schemes.length > 0 
+      ? schemes.map((s: any) => `Title: ${s.title}\nDept: ${s.department}\nDesc: ${s.description}`).join('\n\n')
+      : "No schemes found matching the query."
+
+    const prompt = `You are a helpful assistant for Indian citizens looking for government schemes. 
+The user is asking: "${query}"
+
+Here are the top matching schemes from our database:
+${schemeContext}
+
+Answer the user's question clearly, suggesting the best schemes from the context above. Be concise and friendly.
+CRITICAL INSTRUCTION: You MUST respond entirely in ${targetLanguage}. Do not use English unless translating a specific proper noun that has no translation.`
+
+    // 3. Generate response using Gemini
+    const chatModel = genAI.getGenerativeModel({ model: "gemini-1.5-pro" })
+    const result = await chatModel.generateContent(prompt)
+    const responseText = result.response.text()
+
+    return new Response(JSON.stringify({ response: responseText, schemes }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     })
-  } catch (error) {
+
+  } catch (error: any) {
+    console.error("Error:", error.message)
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 400,
+      status: 500,
     })
   }
 })

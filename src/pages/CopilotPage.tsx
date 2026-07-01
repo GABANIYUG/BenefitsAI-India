@@ -4,6 +4,7 @@ import { useMutation } from "@tanstack/react-query"
 import { sendCopilotMessage } from "../services/copilot.service"
 import { useAuth } from "../contexts/AuthContext"
 import { useLocation } from "react-router-dom"
+import { useTranslation } from "react-i18next"
 
 interface Message {
   id: string;
@@ -15,6 +16,7 @@ interface Message {
 export default function CopilotPage() {
   const { token } = useAuth();
   const location = useLocation();
+  const { t, i18n } = useTranslation();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -37,7 +39,7 @@ export default function CopilotPage() {
   }, [messages])
 
   const mutation = useMutation({
-    mutationFn: (msg: string) => sendCopilotMessage(msg, token),
+    mutationFn: (msg: string) => sendCopilotMessage(msg, token, i18n.language),
     onSuccess: (data) => {
       const foundSchemes = data.schemes || [];
       const replyContent = foundSchemes.length > 0 
@@ -160,19 +162,20 @@ export default function CopilotPage() {
 
       <form onSubmit={handleSubmit} className="w-full glass-panel rounded-full p-2 flex items-center shadow-lg border border-outline-variant/20 relative z-10 shrink-0">
         <input 
+          type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          className="flex-grow bg-transparent border-none focus:ring-0 text-on-surface placeholder:text-outline h-12 font-body-md focus:outline-none px-4" 
-          placeholder="Ask me anything about government schemes..." 
-          type="text"
+          placeholder={t('copilot.placeholder')}
+          className="flex-grow bg-transparent border-none focus:ring-0 text-on-surface placeholder:text-outline/70 h-14 px-2 font-body-md text-body-md focus:outline-none"
           disabled={mutation.isPending}
         />
         <button 
           type="submit"
           disabled={mutation.isPending || !input.trim()}
-          className="glow-button bg-primary text-on-primary h-10 w-10 flex items-center justify-center rounded-full transition-all hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
+          className="glow-button bg-primary text-on-primary h-10 w-10 md:w-auto md:px-4 flex items-center justify-center rounded-full transition-all hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
         >
           <span className="material-symbols-outlined text-[20px]">send</span>
+          <span className="hidden md:inline font-bold ml-2">{t('copilot.searchBtn')}</span>
         </button>
       </form>
     </div>
