@@ -1,0 +1,142 @@
+[
+    {
+        "title": "Mukhya Mantri Amrutam (MA) Yojana",
+        "description": "A health insurance scheme by the Government of Gujarat that provides tertiary care treatment to Below Poverty Line (BPL) and lower-middle-class families for severe diseases like cardiovascular issues, renal diseases, and cancer.",
+        "department": "Health and Family Welfare",
+        "category": "Health Insurance",
+        "source_url": "https://magujarat.com/"
+    },
+    {
+        "title": "Vahali Dikri Yojana",
+        "description": "A financial assistance scheme by the Gujarat government to promote the birth of girl children, prevent female foeticide, and support their education. It provides Rs. 1,10,000 in staggered payments until the girl turns 18.",
+        "department": "Women and Child Development",
+        "category": "Child Welfare",
+        "source_url": "https://wcd.gujarat.gov.in/"
+    },
+    {
+        "title": "Kisan Sahay Yojana",
+        "description": "Crop insurance scheme in Gujarat where farmers are given financial compensation in case of crop loss due to drought, excess rain, or unseasonal rain without paying any premium.",
+        "department": "Agriculture",
+        "category": "Agriculture",
+        "source_url": "https://agri.gujarat.gov.in/"
+    },
+    {
+        "title": "Mukhyamantri Yuva Swavalamban Yojana (MYSY)",
+        "description": "Provides financial assistance to meritorious and needy students for higher education, covering 50% of tuition fees and hostel/food expenses. Specifically aimed at students who have passed standard 10th or 12th with 80+ PR.",
+        "department": "Education",
+        "category": "Scholarship",
+        "source_url": "https://mysy.guj.nic.in/"
+    },
+    {
+        "title": "Manav Garima Yojana",
+        "description": "Provides financial assistance and equipment toolkits to socially and economically backward classes to encourage self-employment and small businesses (tailoring, plumbing, carpentry, etc).",
+        "department": "Social Justice & Empowerment",
+        "category": "Employment",
+        "source_url": "https://sje.gujarat.gov.in/"
+    },
+    {
+        "title": "Post Matric Scholarship for ST Students",
+        "description": "A centrally sponsored scheme operated by Gujarat to provide financial assistance to Scheduled Tribe (ST) students studying at post-matriculation or post-secondary levels to enable them to complete their education.",
+        "department": "Tribal Development",
+        "category": "Scholarship",
+        "source_url": "https://digitalgujarat.gov.in/"
+    },
+    {
+        "title": "Post Matric Scholarship for SC Students",
+        "description": "Financial assistance to Scheduled Caste (SC) students studying at post-matriculation or post-secondary stages. Covers maintenance allowance, reimbursement of compulsory non-refundable fees, and study tour charges.",
+        "department": "Social Justice & Empowerment",
+        "category": "Scholarship",
+        "source_url": "https://digitalgujarat.gov.in/"
+    },
+    {
+        "title": "Post Matric Scholarship for SEBC (OBC) Students",
+        "description": "Financial assistance to Socially and Educationally Backward Class (SEBC/OBC) students for post-secondary education. Includes tuition fee waivers and maintenance allowances.",
+        "department": "Social Justice & Empowerment",
+        "category": "Scholarship",
+        "source_url": "https://digitalgujarat.gov.in/"
+    },
+    {
+        "title": "Swami Vivekananda Stipend Scheme for Technical and Professional Courses",
+        "description": "Provides stipends to tribal students pursuing technical, professional, or ITI courses to encourage higher technical education and skill development.",
+        "department": "Tribal Development",
+        "category": "Scholarship",
+        "source_url": "https://digitalgujarat.gov.in/"
+    },
+    {
+        "title": "Chief Minister Scholarship Scheme (CMSS)",
+        "description": "Aimed at meritorious students in Gujarat pursuing undergraduate courses. Provides massive tuition fee subsidies for students from families with an annual income below Rs. 4.5 Lakhs.",
+        "department": "Education",
+        "category": "Scholarship",
+        "source_url": "https://scholarships.gujarat.gov.in/"
+    },
+    {
+        "title": "Dr. Ambedkar Awas Yojana",
+        "description": "Provides financial assistance to people belonging to Scheduled Castes (SC) for constructing a new house. Beneficiaries receive a direct cash subsidy in multiple installments.",
+        "department": "Social Justice & Empowerment",
+        "category": "Housing",
+        "source_url": "https://sje.gujarat.gov.in/"
+    },
+    {
+        "title": "Pandit Deendayal Upadhyay Awas Yojana",
+        "description": "A housing scheme providing financial assistance to Socially and Educationally Backward Classes (SEBC), Nomadic Tribes, and Denotified Tribes to build a home.",
+        "department": "Social Justice & Empowerment",
+        "category": "Housing",
+        "source_url": "https://sje.gujarat.gov.in/"
+    },
+    {
+        "title": "Kuvarbai Nu Mameru Yojana",
+        "description": "Financial assistance provided to families of Scheduled Castes (SC) and Socially and Educationally Backward Classes (SEBC) on the occasion of their daughter's marriage (up to two daughters).",
+        "department": "Social Justice & Empowerment",
+        "category": "Social Welfare",
+        "source_url": "https://sje.gujarat.gov.in/"
+    },
+    {
+        "title": "Saraswati Sadhana Yojana",
+        "description": "Provides free bicycles to girls belonging to Scheduled Castes (SC) and SEBC categories who have enrolled in standard 9th to encourage them to continue secondary education.",
+        "department": "Social Justice & Empowerment",
+        "category": "Education",
+        "source_url": "https://sje.gujarat.gov.in/"
+    },
+    {
+        "title": "Mukhya Mantri Matrushakti Yojana",
+        "description": "Aims to provide nutritious food to pregnant and lactating mothers for 1000 days. Beneficiaries receive free rations of protein-rich foods like chickpeas and edible oil every month.",
+        "department": "Women and Child Development",
+        "category": "Health & Nutrition",
+        "source_url": "https://wcd.gujarat.gov.in/"
+    },
+    {
+        "title": "Ganga Swaroopa Economic Assistance Scheme",
+        "description": "Formerly known as Vidhva Sahay Yojana. Provides monthly financial assistance to widows in Gujarat to help them lead a life of dignity and financial independence.",
+        "department": "Women and Child Development",
+        "category": "Pension",
+        "source_url": "https://wcd.gujarat.gov.in/"
+    },
+    {
+        "title": "Namo Tablet Yojana",
+        "description": "Provides branded tablets to college students enrolled in their first year of diploma, degree, or professional courses at a highly subsidized rate of just Rs. 1000 to promote digital learning.",
+        "department": "Education",
+        "category": "Education",
+        "source_url": "https://www.digitalgujarat.gov.in/"
+    },
+    {
+        "title": "Shramik Annapurna Yojana",
+        "description": "Provides nutritious, hot, and hygienic meals to registered construction workers and laborers in Gujarat at a highly subsidized rate of just Rs. 5 per meal at Kadia Nakas.",
+        "department": "Labour & Employment",
+        "category": "Food Security",
+        "source_url": "https://labour.gujarat.gov.in/"
+    },
+    {
+        "title": "Mukhya Mantri Kanya Kelavani Nidhi",
+        "description": "An education fund utilized to promote girls' education. Medical students (MBBS) who are female receive significant tuition fee assistance under this scheme.",
+        "department": "Education",
+        "category": "Scholarship",
+        "source_url": "https://education.gujarat.gov.in/"
+    },
+    {
+        "title": "Mukhya Mantri Pashupalan Sahay Yojana",
+        "description": "Provides financial subsidies to cattle rearers and farmers for purchasing milch animals, fodder, and constructing cattle sheds to promote the animal husbandry sector in Gujarat.",
+        "department": "Animal Husbandry",
+        "category": "Agriculture",
+        "source_url": "https://doah.gujarat.gov.in/"
+    }
+]

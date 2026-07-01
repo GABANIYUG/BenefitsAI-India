@@ -1,6 +1,7 @@
 import os
 import requests
-import google.generativeai as genai
+import json
+import time
 from supabase import create_client, Client
 from datetime import datetime
 
@@ -9,135 +10,145 @@ SUPABASE_URL = os.environ.get("SUPABASE_URL")
 SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_KEY")
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 
-if not SUPABASE_URL or not SUPABASE_SERVICE_KEY or not GEMINI_API_KEY:
-    print("Error: Missing environment variables. Please set them in GitHub Secrets.")
-    exit(1)
+def fetch_schemes_live_in_blocks():
+    """Fetch schemes from the live API using pagination and delays (blocks)."""
+    print("Fetching Schemes from live government API in blocks...")
+    all_schemes = []
+    offset = 0
+    limit = 10 # Block size
+    max_schemes = 400 # Failsafe
+    
+    # Headers to mimic a browser
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36',
+        'Accept': 'application/json, text/plain, */*',
+        'Referer': 'https://www.myscheme.gov.in/'
+    }
 
-# Initialize Clients
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
-genai.configure(api_key=GEMINI_API_KEY)
-
-def fetch_gujarat_schemes():
-    """
-    Simulates fetching schemes from a government portal.
-    In a real production scenario with MyScheme.gov.in, you would use 
-    tools like Playwright here to bypass their Cloudflare 403 Forbidden blocks,
-    or parse their daily CSV dumps from data.gov.in.
-    
-    For demonstration of the UPSERT pipeline, we provide a robust fallback dataset.
-    """
-    print(f"[{datetime.now()}] Fetching Gujarat Schemes...")
-    
-    # Due to intense bot-protection (Cloudflare 403) on government APIs, 
-    # we use a fallback dataset if the live fetch fails.
-    fallback_data = [
-        {
-            "title": "Mukhya Mantri Amrutam (MA) Yojana",
-            "description": "A health insurance scheme by the Government of Gujarat that provides tertiary care treatment to Below Poverty Line (BPL) families.",
-            "department": "Health and Family Welfare",
-            "category": "Health Insurance",
-            "source_url": "https://magujarat.com/"
-        },
-        {
-            "title": "Vahali Dikri Yojana",
-            "description": "A financial assistance scheme by the Gujarat government to promote the birth of girl children, prevent female foeticide, and support their education.",
-            "department": "Women and Child Development",
-            "category": "Child Welfare",
-            "source_url": "https://wcd.gujarat.gov.in/"
-        },
-        {
-            "title": "Kisan Sahay Yojana",
-            "description": "Crop insurance scheme in Gujarat where farmers are given financial compensation in case of crop loss due to drought, excess rain, or unseasonal rain without paying any premium.",
-            "department": "Agriculture",
-            "category": "Agriculture",
-            "source_url": "https://agri.gujarat.gov.in/"
-        },
-        {
-            "title": "Mukhyamantri Yuva Swavalamban Yojana",
-            "description": "Provides financial assistance to meritorious and needy students for higher education, covering tuition fees and hostel expenses.",
-            "department": "Education",
-            "category": "Education",
-            "source_url": "https://mysy.guj.nic.in/"
-        },
-        {
-            "title": "Manav Garima Yojana",
-            "description": "Provides financial assistance and equipment to socially and economically backward classes to encourage self-employment and small businesses.",
-            "department": "Social Justice & Empowerment",
-            "category": "Employment",
-            "source_url": "https://sje.gujarat.gov.in/"
-        }
-    ]
-    
-    # Try fetching from a hypothetical open API (this will likely fail or return nothing, so we fallback)
-    try:
-        response = requests.get("https://api.myscheme.gov.in/search/v2/schemes?state=Gujarat", timeout=10)
-        if response.status_code == 200:
-            print("Successfully fetched live data!")
-            # parse response.json() here...
-        else:
-            print(f"Live API blocked (Status {response.status_code}). Using structured fallback dataset.")
-    except Exception as e:
-        print(f"Live API request failed: {e}. Using structured fallback dataset.")
+    while offset < max_schemes:
+        url = f"https://api.myscheme.gov.in/search/v2/schemes?state=Gujarat&offset={offset}&limit={limit}"
+        print(f"Fetching block: offset {offset} to {offset+limit}...")
         
-    return fallback_data
+        try:
+            response = requests.get(url, headers=headers, timeout=15)
+            
+            if response.status_code == 200:
+                data = response.json()
+                schemes = data.get('data', {}).get('schemes', [])
+                if not schemes:
+                    print("No more schemes found. Finished fetching.")
+                    break
+                    
+                all_schemes.extend(schemes)
+                print(f"Successfully fetched {len(schemes)} schemes in this block.")
+                
+            elif response.status_code == 403:
+                print("\n[CRITICAL ERROR] The Government's Cloudflare Firewall blocked the request (403 Forbidden).")
+                print("The server detected this script as an automated bot and instantly refused connection.")
+                print(f"Response snippet: {response.text[:200]}")
+                print("\nStopping ingestion process.")
+                return []
+            else:
+                print(f"Error fetching data: {response.status_code}")
+                print(response.text[:200])
+                break
+                
+        except Exception as e:
+            print(f"Network error: {e}")
+            break
+            
+        offset += limit
+        
+        if offset < max_schemes:
+            print(f"Sleeping for 5 seconds to avoid rate-limiting...")
+            time.sleep(5)
+            
+    print(f"Successfully fetched {len(all_schemes)} total schemes from live API.")
+    return all_schemes
 
 def generate_embedding(text):
-    """Generate a vector embedding using Gemini API."""
+    """Generate a vector embedding using Gemini REST API to ensure exact 1536 dimensionality."""
     try:
-        # text-embedding-004 is Google's latest embedding model
-        result = genai.embed_content(
-            model="models/text-embedding-004",
-            content=text,
-            task_type="retrieval_document"
-        )
-        return result['embedding']
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-2:embedContent?key={GEMINI_API_KEY}"
+        payload = {
+            "model": "models/gemini-embedding-2",
+            "content": {
+                "parts": [{"text": text}]
+            },
+            "outputDimensionality": 1536
+        }
+        headers = {'Content-Type': 'application/json'}
+        response = requests.post(url, json=payload, headers=headers)
+        if response.status_code == 200:
+            return response.json()['embedding']['values']
+        else:
+            print(f"Gemini API Error: {response.text}")
+            return None
     except Exception as e:
         print(f"Error generating embedding: {e}")
         return None
 
-def upsert_to_supabase(schemes):
-    """Upsert schemes into Supabase and generate embeddings if new."""
-    print(f"[{datetime.now()}] Processing {len(schemes)} schemes for database sync...")
+def main():
+    print("=== Starting Internet Block Ingestion Pipeline ===")
+    
+    if not all([SUPABASE_URL, SUPABASE_SERVICE_KEY, GEMINI_API_KEY]):
+        print("Error: Missing required environment variables.")
+        return
+
+    # Initialize Supabase client
+    supabase: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+
+    # 1. Fetch from Internet
+    schemes = fetch_schemes_live_in_blocks()
+
+    if not schemes:
+        print("No schemes found to process (Likely blocked by Cloudflare).")
+        return
+
+    # 2. Process and Upsert
+    print(f"Processing {len(schemes)} schemes for database sync...")
     
     for scheme in schemes:
-        title = scheme["title"]
+        title = scheme.get('schemeName', 'Unknown')
+        desc = scheme.get('briefDescription', 'No description available.')
+        dept = scheme.get('nodalMinistryName', 'General')
+        state = 'Gujarat'
         
-        # 1. Check if scheme already exists
-        response = supabase.table("schemes").select("id").eq("title", title).execute()
+        # Check if already exists based on title to avoid duplicating
+        existing = supabase.table('schemes').select("id").eq("title", title).execute()
         
-        if len(response.data) > 0:
-            print(f"Skipping existing scheme: {title}")
-            continue
-            
+        if existing.data:
+             print(f"Skipping existing scheme: {title}")
+             continue
+             
         print(f"New scheme found: {title}. Generating embedding...")
         
-        # 2. Generate Embedding
-        search_text = f"{title}. {scheme['description']} Department: {scheme['department']} Category: {scheme['category']}"
-        embedding = generate_embedding(search_text)
+        # Generate semantic string for embedding
+        embedding_text = f"Title: {title}\nCategory: {dept}\nState: {state}\nDescription: {desc}"
         
-        if not embedding:
+        embedding_vector = generate_embedding(embedding_text)
+        
+        if not embedding_vector:
             print(f"Failed to generate embedding for {title}, skipping.")
             continue
             
-        # 3. Insert into Supabase
-        scheme_data = {
+        # Prepare row data
+        row = {
             "title": title,
-            "description": scheme["description"],
-            "department": scheme["department"],
-            "category": scheme["category"],
-            "state": "Gujarat",
-            "source_url": scheme.get("source_url", ""),
-            "embedding": embedding
+            "description": desc,
+            "department": dept,
+            "state": state,
+            "embedding": embedding_vector
         }
         
+        # Insert into Supabase
         try:
-            supabase.table("schemes").insert(scheme_data).execute()
+            supabase.table('schemes').insert(row).execute()
             print(f"Successfully inserted: {title}")
         except Exception as e:
-            print(f"Database insertion failed for {title}: {e}")
+            print(f"Error inserting {title} into database: {e}")
+
+    print("=== Pipeline Complete ===")
 
 if __name__ == "__main__":
-    print("=== Starting Gujarat Scheme Ingestion Pipeline ===")
-    schemes = fetch_gujarat_schemes()
-    upsert_to_supabase(schemes)
-    print("=== Pipeline Complete ===")
+    main()
