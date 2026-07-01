@@ -2,16 +2,56 @@ import { Request, Response } from 'express'
 import { supabase } from '../lib/supabase'
 import { AuthenticatedRequest } from '../middlewares/auth.middleware'
 import { EligibilityEvaluator, RuleAST } from '../services/eligibility'
+import { gemini } from '../lib/gemini'
+
+const translatedSchemesCache: Record<string, any[]> = {}
+
+const translateSchemes = async (schemes: any[], lang: string) => {
+  if (!schemes || schemes.length === 0 || lang === 'EN') return schemes;
+  const cacheKey = lang.toUpperCase();
+  if (translatedSchemesCache[cacheKey]) {
+    return translatedSchemesCache[cacheKey];
+  }
+
+  const langMap: Record<string, string> = {
+    'HI': 'Hindi',
+    'GU': 'Gujarati',
+  }
+  const targetLanguage = langMap[cacheKey];
+  if (!targetLanguage) return schemes;
+
+  const prompt = `Translate the following JSON array of government schemes into ${targetLanguage}. Keep the exact JSON array structure and keys ("id", "title", "department", "description", "qdrantId"). Only translate the string values for "title", "department", and "description". Do not add any markdown, return only the raw JSON array.
+  JSON: ${JSON.stringify(schemes)}`;
+
+  try {
+    const response = await gemini.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: prompt
+    });
+    
+    let text = response.text || "[]";
+    text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+    const translated = JSON.parse(text);
+    translatedSchemesCache[cacheKey] = translated;
+    return translated;
+  } catch (error) {
+    console.error("Translation error", error);
+    return schemes;
+  }
+}
 
 export const getSchemes = async (req: Request, res: Response) => {
   try {
+    const lang = (req.query.lang as string) || 'EN';
     const { data: schemes, error } = await supabase
       .from('schemes')
       .select('*')
 
     if (error) throw error
 
-    res.status(200).json({ success: true, data: schemes })
+    const finalSchemes = await translateSchemes(schemes || [], lang);
+
+    res.status(200).json({ success: true, data: finalSchemes })
   } catch (error) {
     console.error('Error fetching schemes:', error)
     res.status(500).json({ success: false, message: 'Server Error' })
@@ -65,7 +105,10 @@ export const getEligibleSchemes = async (req: AuthenticatedRequest, res: Respons
 
     if (schemesError || !allSchemes) throw schemesError
 
-    const eligibleSchemes = allSchemes.map(scheme => {
+    const lang = (req.query.lang as string) || 'EN';
+    const translatedSchemes = await translateSchemes(allSchemes || [], lang);
+
+    const eligibleSchemes = translatedSchemes.map(scheme => {
       // Mock evaluation for now since 'schemes' table doesn't have structured eligibilityRules
       return {
         scheme,

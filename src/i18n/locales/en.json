@@ -27,5 +27,13 @@
     "subtitle": "I can explain government schemes, compare eligibility criteria, or guide you step-by-step through application processes.",
     "suggestion1": "\"Am I eligible for PM-Kisan?\"",
     "suggestion2": "\"How do I apply for scholarships?\""
+  },
+  "schemes": {
+    "availableSchemes": "Available Schemes",
+    "allSchemes": "All Schemes",
+    "forMe": "For Me",
+    "noSchemes": "No schemes found.",
+    "viewDetails": "View Details",
+    "general": "General"
   }
 }

@@ -79,8 +79,23 @@ CRITICAL INSTRUCTION: You MUST respond entirely in ${targetLanguage}. Do not use
     const chatModel = genAI.getGenerativeModel({ model: "gemini-1.5-pro" })
     const result = await chatModel.generateContent(prompt)
     const responseText = result.response.text()
+    
+    // 4. Translate the schemes array if needed
+    let translatedSchemes = schemes;
+    if (language.toUpperCase() !== 'EN' && schemes && schemes.length > 0) {
+      const translatePrompt = `Translate the following JSON array of government schemes into ${targetLanguage}. Keep the exact JSON array structure and keys ("id", "title", "department", "description"). Only translate the string values for "title", "department", and "description". Do not add any markdown or explanation, return only the raw JSON array.
+      JSON: ${JSON.stringify(schemes)}`;
+      try {
+        const translateResult = await chatModel.generateContent(translatePrompt);
+        let text = translateResult.response.text() || "[]";
+        text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+        translatedSchemes = JSON.parse(text);
+      } catch (e) {
+        console.error("Failed to translate schemes", e);
+      }
+    }
 
-    return new Response(JSON.stringify({ response: responseText, schemes }), {
+    return new Response(JSON.stringify({ response: responseText, schemes: translatedSchemes }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     })
