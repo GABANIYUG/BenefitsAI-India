@@ -13,8 +13,7 @@ export default function SchemesPage() {
     queryKey: ['schemes', filter, i18n.language],
     queryFn: () => filter === 'all' 
       ? getSchemes(token, i18n.language) 
-      // Using a mock profile ID for eligible schemes, in a real app this comes from the user context/profile API
-      : getEligibleSchemes('mock-profile-id', token, i18n.language),
+      : getEligibleSchemes(token, i18n.language),
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
   });
 

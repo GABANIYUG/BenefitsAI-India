@@ -12,9 +12,8 @@ export const getSchemes = async (token: string | null, lang: string = 'EN') => {
   return res.json();
 };
 
-export const getEligibleSchemes = async (profileId: string, token: string | null, lang: string = 'EN') => {
-  // For now, eligible schemes just hit get-schemes since we haven't implemented full eligibility yet
-  const res = await fetch(`${SUPABASE_URL}/functions/v1/get-schemes?lang=${lang}&profileId=${profileId}`, {
+export const getEligibleSchemes = async (token: string | null, lang: string = 'EN') => {
+  const res = await fetch(`${SUPABASE_URL}/functions/v1/get-schemes?lang=${lang}&eligible=true`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',

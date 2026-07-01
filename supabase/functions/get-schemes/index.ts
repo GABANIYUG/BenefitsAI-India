@@ -33,25 +33,69 @@ serve(async (req) => {
       throw error
     }
 
-    if (!schemes || schemes.length === 0 || lang === 'EN') {
-      return new Response(JSON.stringify({ success: true, data: schemes || [] }), {
+    if (!schemes || schemes.length === 0) {
+      return new Response(JSON.stringify({ success: true, data: [] }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
       })
     }
 
-    // 2. Translate if needed
-    const geminiApiKey = Deno.env.get('GEMINI_API_KEY')
-    if (!geminiApiKey) throw new Error("GEMINI_API_KEY is not set")
-    const ai = new GoogleGenAI({ apiKey: geminiApiKey })
-
-    const langMap: Record<string, string> = {
-      'HI': 'Hindi',
-      'GU': 'Gujarati',
-    }
+    const isEligibleCheck = url.searchParams.get('eligible') === 'true'
+    const langMap: Record<string, string> = { 'HI': 'Hindi', 'GU': 'Gujarati' }
     const targetLanguage = langMap[lang.toUpperCase()]
-    
-    if (!targetLanguage) {
+
+    const geminiApiKey = Deno.env.get('GEMINI_API_KEY')
+    if (!geminiApiKey && (isEligibleCheck || targetLanguage)) {
+      throw new Error("GEMINI_API_KEY is not set")
+    }
+    const ai = geminiApiKey ? new GoogleGenAI({ apiKey: geminiApiKey }) : null;
+
+    if (isEligibleCheck && ai) {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error("Unauthorized for eligibility check")
+
+      const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+      if (!profile) {
+        return new Response(JSON.stringify({ success: true, data: [] }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200,
+        })
+      }
+
+      const prompt = `You are an expert Government Schemes Eligibility Evaluator.
+      User Profile: ${JSON.stringify(profile)}
+      Available Schemes: ${JSON.stringify(schemes)}
+
+      Evaluate which of these schemes the user is eligible for based on their profile data (age, income, is_student, is_farmer).
+      Return a JSON array containing ONLY the schemes they are eligible for. 
+      Format exactly like this:
+      [
+        {
+          "scheme": { ...original scheme object... },
+          "evaluation": { "isEligible": true, "reason": "Brief explanation of why they are eligible" }
+        }
+      ]
+      ${targetLanguage ? `IMPORTANT: Translate the "title", "department", and "description" fields of the scheme object, AND the "reason" field into ${targetLanguage}.` : ''}
+      Return ONLY raw JSON array. Do not add markdown or text formatting.`;
+
+      const evalResult = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
+      let text = evalResult.text || "[]";
+      text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+      
+      let finalData = schemes;
+      try {
+        finalData = JSON.parse(text);
+      } catch (e) {
+        console.error("AI Eligibility parsing error:", e);
+      }
+
+      return new Response(JSON.stringify({ success: true, data: finalData }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+      })
+    }
+
+    if (lang === 'EN' || !targetLanguage || !ai) {
       return new Response(JSON.stringify({ success: true, data: schemes }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
