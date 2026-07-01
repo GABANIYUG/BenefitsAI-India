@@ -31,12 +31,32 @@ serve(async (req) => {
 
     const ai = new GoogleGenAI({ apiKey: geminiApiKey })
 
-    // 1. Generate embedding for the user's query
-    const embeddingResponse = await ai.models.embedContent({
-      model: 'text-embedding-004',
-      contents: query
-    })
-    const embedding = embeddingResponse.embeddings?.[0]?.values || []
+    // 1. Generate embedding for the user's query via REST API directly (bypassing Deno SDK bugs)
+    const embedRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${geminiApiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'models/text-embedding-004',
+        content: { parts: [{ text: query }] }
+      })
+    });
+    
+    if (!embedRes.ok) {
+      const errText = await embedRes.text();
+      // Debug: Fetch available models
+      let modelsDebug = "";
+      try {
+        const modelsRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${geminiApiKey}`);
+        const modelsData = await modelsRes.json();
+        modelsDebug = JSON.stringify(modelsData.models.filter((m: any) => m.supportedGenerationMethods.includes('embedContent')).map((m: any) => m.name));
+      } catch (e) {
+        modelsDebug = "Failed to fetch models list";
+      }
+      throw new Error(`Embedding Failed: ${embedRes.status} - ${errText}. Supported models: ${modelsDebug}`);
+    }
+    
+    const embedData = await embedRes.json();
+    const embedding = embedData.embedding?.values || [];
 
     // 2. Search Supabase using match_schemes RPC
     const supabase = createClient(
