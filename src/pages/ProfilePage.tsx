@@ -12,6 +12,12 @@ const profileSchema = z.object({
   income: z.number().min(0, "Income must be positive").optional().or(z.nan()),
   is_student: z.boolean().optional(),
   is_farmer: z.boolean().optional(),
+  gender: z.string().optional(),
+  category: z.string().optional(),
+  caste: z.string().optional(),
+  district: z.string().optional(),
+  has_disability: z.boolean().optional(),
+  occupation: z.string().optional(),
 });
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
@@ -35,7 +41,13 @@ export default function ProfilePage() {
       state: '',
       income: undefined,
       is_student: false,
-      is_farmer: false
+      is_farmer: false,
+      gender: '',
+      category: '',
+      caste: '',
+      district: '',
+      has_disability: false,
+      occupation: ''
     }
   });
 
@@ -116,12 +128,32 @@ export default function ProfilePage() {
                 <p className="text-lg font-bold text-on-surface">{currentValues.age || 'Not provided'}</p>
               </div>
               <div>
+                <p className="text-sm font-medium text-on-surface-variant mb-1">Gender</p>
+                <p className="text-lg font-bold text-on-surface">{currentValues.gender || 'Not provided'}</p>
+              </div>
+              <div>
                 <p className="text-sm font-medium text-on-surface-variant mb-1">State</p>
                 <p className="text-lg font-bold text-on-surface">{currentValues.state || 'Not provided'}</p>
               </div>
-              <div className="md:col-span-2">
+              <div>
+                <p className="text-sm font-medium text-on-surface-variant mb-1">District</p>
+                <p className="text-lg font-bold text-on-surface">{currentValues.district || 'Not provided'}</p>
+              </div>
+              <div>
                 <p className="text-sm font-medium text-on-surface-variant mb-1">Annual Income (₹)</p>
                 <p className="text-lg font-bold text-on-surface">{currentValues.income ? `₹${currentValues.income.toLocaleString()}` : 'Not provided'}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-on-surface-variant mb-1">Occupation</p>
+                <p className="text-lg font-bold text-on-surface">{currentValues.occupation || 'Not provided'}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-on-surface-variant mb-1">Category</p>
+                <p className="text-lg font-bold text-on-surface">{currentValues.category || 'Not provided'}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-on-surface-variant mb-1">Caste</p>
+                <p className="text-lg font-bold text-on-surface">{currentValues.caste || 'Not provided'}</p>
               </div>
             </div>
             
@@ -134,7 +166,10 @@ export default function ProfilePage() {
                 {currentValues.is_farmer && (
                   <span className="px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-bold">Farmer</span>
                 )}
-                {!currentValues.is_student && !currentValues.is_farmer && (
+                {currentValues.has_disability && (
+                  <span className="px-3 py-1 rounded-full bg-tertiary/10 text-tertiary text-sm font-bold">Differently Abled</span>
+                )}
+                {!currentValues.is_student && !currentValues.is_farmer && !currentValues.has_disability && (
                   <span className="text-on-surface-variant text-sm">No special categories selected.</span>
                 )}
               </div>
@@ -152,6 +187,16 @@ export default function ProfilePage() {
                 />
                 {errors.age && <p className="text-red-400 text-xs mt-1">{errors.age.message}</p>}
               </div>
+
+              <div>
+                <label className="block text-sm font-medium text-on-surface mb-2">Gender</label>
+                <select {...register("gender")} className="w-full bg-surface-container-highest border border-outline-variant/30 rounded-lg p-3 text-on-surface focus:outline-none focus:border-primary">
+                  <option value="">Select Gender</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
               
               <div>
                 <label className="block text-sm font-medium text-on-surface mb-2">State</label>
@@ -161,32 +206,78 @@ export default function ProfilePage() {
                   placeholder="e.g. Maharashtra"
                   className="w-full bg-surface-container-highest border border-outline-variant/30 rounded-lg p-3 text-on-surface focus:outline-none focus:border-primary"
                 />
-                {errors.state && <p className="text-red-400 text-xs mt-1">{errors.state.message}</p>}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-on-surface mb-2">District</label>
+                <input 
+                  type="text" 
+                  {...register("district")}
+                  placeholder="e.g. Pune"
+                  className="w-full bg-surface-container-highest border border-outline-variant/30 rounded-lg p-3 text-on-surface focus:outline-none focus:border-primary"
+                />
               </div>
               
-              <div className="md:col-span-2">
+              <div>
                 <label className="block text-sm font-medium text-on-surface mb-2">Annual Income (₹)</label>
                 <input 
                   type="number" 
                   {...register("income", { valueAsNumber: true })}
                   className="w-full bg-surface-container-highest border border-outline-variant/30 rounded-lg p-3 text-on-surface focus:outline-none focus:border-primary"
                 />
-                {errors.income && <p className="text-red-400 text-xs mt-1">{errors.income.message}</p>}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-on-surface mb-2">Occupation</label>
+                <input 
+                  type="text" 
+                  {...register("occupation")}
+                  placeholder="e.g. Salaried, Self-employed, Unemployed"
+                  className="w-full bg-surface-container-highest border border-outline-variant/30 rounded-lg p-3 text-on-surface focus:outline-none focus:border-primary"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-on-surface mb-2">Category</label>
+                <select {...register("category")} className="w-full bg-surface-container-highest border border-outline-variant/30 rounded-lg p-3 text-on-surface focus:outline-none focus:border-primary">
+                  <option value="">Select Category</option>
+                  <option value="General">General</option>
+                  <option value="OBC">OBC</option>
+                  <option value="SC">SC</option>
+                  <option value="ST">ST</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-on-surface mb-2">Caste (Optional)</label>
+                <input 
+                  type="text" 
+                  {...register("caste")}
+                  placeholder="e.g. Patel"
+                  className="w-full bg-surface-container-highest border border-outline-variant/30 rounded-lg p-3 text-on-surface focus:outline-none focus:border-primary"
+                />
               </div>
             </div>
 
             <div className="space-y-4 pt-4 border-t border-outline-variant/10">
-              <h3 className="font-medium text-on-surface">Categories</h3>
+              <h3 className="font-medium text-on-surface">Tags & Special Conditions</h3>
               
-              <label className="flex items-center gap-3 cursor-pointer p-3 rounded-lg hover:bg-surface-container-highest transition-colors">
-                <input type="checkbox" {...register("is_student")} className="w-5 h-5 accent-primary" />
-                <span className="text-on-surface">I am a Student</span>
-              </label>
-              
-              <label className="flex items-center gap-3 cursor-pointer p-3 rounded-lg hover:bg-surface-container-highest transition-colors">
-                <input type="checkbox" {...register("is_farmer")} className="w-5 h-5 accent-primary" />
-                <span className="text-on-surface">I am a Farmer</span>
-              </label>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <label className="flex items-center gap-3 cursor-pointer p-3 rounded-lg hover:bg-surface-container-highest transition-colors border border-outline-variant/10">
+                  <input type="checkbox" {...register("is_student")} className="w-5 h-5 accent-primary" />
+                  <span className="text-on-surface text-sm">I am a Student</span>
+                </label>
+                
+                <label className="flex items-center gap-3 cursor-pointer p-3 rounded-lg hover:bg-surface-container-highest transition-colors border border-outline-variant/10">
+                  <input type="checkbox" {...register("is_farmer")} className="w-5 h-5 accent-primary" />
+                  <span className="text-on-surface text-sm">I am a Farmer</span>
+                </label>
+
+                <label className="flex items-center gap-3 cursor-pointer p-3 rounded-lg hover:bg-surface-container-highest transition-colors border border-outline-variant/10">
+                  <input type="checkbox" {...register("has_disability")} className="w-5 h-5 accent-tertiary" />
+                  <span className="text-on-surface text-sm">Differently Abled</span>
+                </label>
+              </div>
             </div>
 
             <div className="pt-6">

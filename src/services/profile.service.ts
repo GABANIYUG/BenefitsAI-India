@@ -8,6 +8,12 @@ export interface ProfileData {
   income?: number;
   is_student?: boolean;
   is_farmer?: boolean;
+  gender?: string;
+  category?: string;
+  caste?: string;
+  district?: string;
+  has_disability?: boolean;
+  occupation?: string;
 }
 
 export const getProfiles = async (token: string | null) => {
