@@ -58,7 +58,7 @@ export default function SchemesPage() {
                 <div className="flex-1">
                   <div className="flex justify-between items-start mb-4">
                     <span className="px-3 py-1 rounded-full bg-primary-container text-on-primary-container text-xs font-bold">
-                      {scheme.category?.name || 'General'}
+                      {scheme.department || 'General'}
                     </span>
                     {evaluation?.isEligible && (
                       <span className="text-green-500 material-symbols-outlined" title="You are eligible!">check_circle</span>
