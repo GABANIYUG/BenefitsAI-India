@@ -108,7 +108,7 @@ export const getEligibleSchemes = async (req: AuthenticatedRequest, res: Respons
     const lang = (req.query.lang as string) || 'EN';
     const translatedSchemes = await translateSchemes(allSchemes || [], lang);
 
-    const eligibleSchemes = translatedSchemes.map(scheme => {
+    const eligibleSchemes = translatedSchemes.map((scheme: any) => {
       // Mock evaluation for now since 'schemes' table doesn't have structured eligibilityRules
       return {
         scheme,
