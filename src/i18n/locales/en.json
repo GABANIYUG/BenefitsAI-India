@@ -13,8 +13,19 @@
     "searchPlaceholder": "I am a farmer from Maharashtra looking for subsidies...",
     "discoverBtn": "Discover"
   },
+  "dashboard": {
+    "copilotChat": "Copilot Chat",
+    "allSchemes": "All Schemes",
+    "myProfile": "My Profile",
+    "checkEligibility": "Check Eligibility",
+    "logout": "Logout"
+  },
   "copilot": {
     "placeholder": "Ask Copilot...",
-    "searchBtn": "Search"
+    "searchBtn": "Search",
+    "greeting": "How can I assist you today?",
+    "subtitle": "I can explain government schemes, compare eligibility criteria, or guide you step-by-step through application processes.",
+    "suggestion1": "\"Am I eligible for PM-Kisan?\"",
+    "suggestion2": "\"How do I apply for scholarships?\""
   }
 }

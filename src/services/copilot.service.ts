@@ -20,9 +20,10 @@ export const sendCopilotMessage = async (message: string, token: string | null, 
 
     const data = await res.json();
     
-    // We expect the Edge Function to return { schemes: [...] }
+    // We expect the Edge Function to return { schemes: [...], response: "..." }
     return {
-      schemes: data.schemes || []
+      schemes: data.schemes || [],
+      response: data.response
     };
   } catch (error) {
     console.error("Copilot Search Error:", error);
