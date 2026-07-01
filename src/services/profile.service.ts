@@ -1,7 +1,8 @@
-import { fetchWithAuth } from '../lib/api';
+import { supabase } from '../lib/supabase';
 
 export interface ProfileData {
   id?: string;
+  userId?: string;
   relation?: string;
   age?: number;
   gender?: string;
@@ -17,21 +18,47 @@ export interface ProfileData {
 }
 
 export const getProfiles = async (token: string | null) => {
-  return fetchWithAuth('/profiles', {
-    method: 'GET'
-  }, token);
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+  
+  const { data, error } = await supabase
+    .from('Profile')
+    .select('*')
+    .eq('userId', user.id);
+    
+  if (error) throw error;
+  return { success: true, data };
 };
 
 export const createProfile = async (profileData: ProfileData, token: string | null) => {
-  return fetchWithAuth('/profiles', {
-    method: 'POST',
-    body: JSON.stringify(profileData)
-  }, token);
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  // Ensure user exists in DB first
+  await supabase.from('User').upsert({ id: user.id, email: user.email });
+
+  const { data, error } = await supabase
+    .from('Profile')
+    .insert({ ...profileData, userId: user.id })
+    .select()
+    .single();
+    
+  if (error) throw error;
+  return { success: true, data };
 };
 
 export const updateProfile = async (id: string, profileData: ProfileData, token: string | null) => {
-  return fetchWithAuth(`/profiles/${id}`, {
-    method: 'PUT',
-    body: JSON.stringify(profileData)
-  }, token);
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const { data, error } = await supabase
+    .from('Profile')
+    .update(profileData)
+    .eq('id', id)
+    .eq('userId', user.id)
+    .select()
+    .single();
+    
+  if (error) throw error;
+  return { success: true, data };
 };
