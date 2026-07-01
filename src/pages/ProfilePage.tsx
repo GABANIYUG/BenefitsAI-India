@@ -6,15 +6,21 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getProfiles, createProfile, updateProfile } from "../services/profile.service";
 import { useAuth } from "../contexts/AuthContext";
 
-const profileSchema = z.object({
-  age: z.preprocess((val) => Number.isNaN(val) ? undefined : val, z.number().min(1, "Age must be positive").optional()),
+type ProfileFormValues = {
+  age?: number;
+  state?: string;
+  income?: number;
+  is_student?: boolean;
+  is_farmer?: boolean;
+};
+
+const profileSchema: z.ZodType<ProfileFormValues> = z.object({
+  age: z.preprocess((val) => Number.isNaN(val as number) || val === '' ? undefined : Number(val), z.number().min(1, "Age must be positive").optional()),
   state: z.string().optional(),
-  income: z.preprocess((val) => Number.isNaN(val) ? undefined : val, z.number().min(0, "Income must be positive").optional()),
+  income: z.preprocess((val) => Number.isNaN(val as number) || val === '' ? undefined : Number(val), z.number().min(0, "Income must be positive").optional()),
   is_student: z.boolean().optional(),
   is_farmer: z.boolean().optional(),
-});
-
-type ProfileFormValues = z.infer<typeof profileSchema>;
+}) as any;
 
 export default function ProfilePage() {
   const { token } = useAuth();
