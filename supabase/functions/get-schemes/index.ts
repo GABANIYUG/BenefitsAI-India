@@ -56,7 +56,13 @@ serve(async (req) => {
 
       const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
       if (!profile) {
-        return new Response(JSON.stringify({ success: true, data: [] }), {
+        return new Response(JSON.stringify({ 
+          success: true, 
+          data: [{
+            scheme: { id: 'debug-profile-missing', title: "Profile Missing", description: "You need to fill out your profile first!" },
+            evaluation: { isEligible: false, reason: "No profile found" }
+          }] 
+        }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 200,
         })
@@ -85,8 +91,18 @@ serve(async (req) => {
       let finalData = schemes;
       try {
         finalData = JSON.parse(text);
+        if (finalData.length === 0) {
+          finalData = [{
+            scheme: { id: 'debug-empty', title: "No Eligible Schemes Found", description: `Gemini returned an empty array. Profile data: ${JSON.stringify(profile)}` },
+            evaluation: { isEligible: false, reason: "AI determined no eligibility" }
+          }];
+        }
       } catch (e) {
         console.error("AI Eligibility parsing error:", e);
+        finalData = [{
+            scheme: { id: 'debug-error', title: "JSON Parse Error", description: `Raw text: ${text}` },
+            evaluation: { isEligible: false, reason: "Parse failed" }
+        }];
       }
 
       return new Response(JSON.stringify({ success: true, data: finalData }), {
