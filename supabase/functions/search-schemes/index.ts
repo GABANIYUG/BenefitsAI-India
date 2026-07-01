@@ -32,7 +32,7 @@ serve(async (req) => {
     const genAI = new GoogleGenerativeAI(geminiApiKey)
 
     // 1. Generate embedding for the user's query
-    const model = genAI.getGenerativeModel({ model: "text-embedding-004" })
+    const model = genAI.getGenerativeModel({ model: "embedding-001" })
     const embeddingResult = await model.embedContent(query)
     const embedding = embeddingResult.embedding.values
 
