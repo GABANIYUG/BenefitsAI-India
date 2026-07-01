@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { getProfiles, createProfile } from "../services/profile.service";
+import { getProfiles, createProfile, updateProfile } from "../services/profile.service";
 import { useAuth } from "../contexts/AuthContext";
 
 const profileSchema = z.object({
@@ -42,7 +42,12 @@ export default function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
 
   const mutation = useMutation({
-    mutationFn: (data: ProfileFormValues) => createProfile(data, token),
+    mutationFn: (data: ProfileFormValues) => {
+      if (profile?.id) {
+        return updateProfile(profile.id, data, token);
+      }
+      return createProfile(data, token);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['profile'] });
       setIsEditing(false);
