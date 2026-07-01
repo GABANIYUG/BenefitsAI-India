@@ -14,7 +14,8 @@ export default function SchemesPage() {
     queryFn: () => filter === 'all' 
       ? getSchemes(token, i18n.language) 
       // Using a mock profile ID for eligible schemes, in a real app this comes from the user context/profile API
-      : getEligibleSchemes('mock-profile-id', token, i18n.language), 
+      : getEligibleSchemes('mock-profile-id', token, i18n.language),
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
   });
 
   const schemes = schemesData?.data || [];
@@ -41,8 +42,23 @@ export default function SchemesPage() {
       </div>
 
       {isLoading ? (
-        <div className="flex justify-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-pulse">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div key={i} className="glass-panel p-6 rounded-2xl border border-outline-variant/10 flex flex-col h-full">
+              <div className="flex-1">
+                <div className="flex justify-between items-start mb-4">
+                  <div className="h-6 w-20 bg-surface-container-highest rounded-full"></div>
+                </div>
+                <div className="h-7 w-3/4 bg-surface-container-high rounded mb-4"></div>
+                <div className="space-y-2 mb-4">
+                  <div className="h-4 w-full bg-surface-container-highest rounded"></div>
+                  <div className="h-4 w-full bg-surface-container-highest rounded"></div>
+                  <div className="h-4 w-2/3 bg-surface-container-highest rounded"></div>
+                </div>
+              </div>
+              <div className="w-full mt-4 h-10 rounded-lg bg-surface-container-highest"></div>
+            </div>
+          ))}
         </div>
       ) : schemes.length === 0 ? (
         <div className="text-center py-12 glass-panel rounded-xl">

@@ -22,7 +22,8 @@ export default function ProfilePage() {
 
   const { data: profilesData, isLoading } = useQuery({
     queryKey: ['profile'],
-    queryFn: () => getProfiles(token)
+    queryFn: () => getProfiles(token),
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
   });
 
   const profile = profilesData?.data?.[0];
@@ -53,7 +54,30 @@ export default function ProfilePage() {
     mutation.mutate(data);
   };
 
-  if (isLoading) return <div className="p-8 text-center">Loading profile...</div>;
+  if (isLoading) {
+    return (
+      <div className="py-8 max-w-2xl mx-auto w-full animate-pulse">
+        <div className="flex justify-between items-center mb-8">
+          <div className="h-10 w-40 bg-surface-container-high rounded-xl"></div>
+          <div className="h-10 w-28 bg-surface-container-high rounded-xl"></div>
+        </div>
+        <div className="glass-panel p-6 rounded-2xl border border-outline-variant/10 space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div><div className="h-4 w-12 bg-surface-container-highest rounded mb-2"></div><div className="h-6 w-20 bg-surface-container-high rounded"></div></div>
+            <div><div className="h-4 w-12 bg-surface-container-highest rounded mb-2"></div><div className="h-6 w-32 bg-surface-container-high rounded"></div></div>
+            <div className="md:col-span-2"><div className="h-4 w-32 bg-surface-container-highest rounded mb-2"></div><div className="h-6 w-40 bg-surface-container-high rounded"></div></div>
+          </div>
+          <div className="pt-4 border-t border-outline-variant/10">
+            <div className="h-5 w-24 bg-surface-container-highest rounded mb-4"></div>
+            <div className="flex gap-4">
+              <div className="h-8 w-24 bg-surface-container-high rounded-full"></div>
+              <div className="h-8 w-24 bg-surface-container-high rounded-full"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const currentValues = profile || {};
 
