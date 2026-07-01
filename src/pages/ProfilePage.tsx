@@ -7,9 +7,9 @@ import { getProfiles, createProfile, updateProfile } from "../services/profile.s
 import { useAuth } from "../contexts/AuthContext";
 
 const profileSchema = z.object({
-  age: z.union([z.number().min(1, "Age must be positive"), z.nan()]).optional().transform(v => isNaN(v as number) ? undefined : v),
+  age: z.preprocess((val) => Number.isNaN(val) ? undefined : val, z.number().min(1, "Age must be positive").optional()),
   state: z.string().optional(),
-  income: z.union([z.number().min(0, "Income must be positive"), z.nan()]).optional().transform(v => isNaN(v as number) ? undefined : v),
+  income: z.preprocess((val) => Number.isNaN(val) ? undefined : val, z.number().min(0, "Income must be positive").optional()),
   is_student: z.boolean().optional(),
   is_farmer: z.boolean().optional(),
 });
