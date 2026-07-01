@@ -6,21 +6,15 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getProfiles, createProfile, updateProfile } from "../services/profile.service";
 import { useAuth } from "../contexts/AuthContext";
 
-type ProfileFormValues = {
-  age?: number;
-  state?: string;
-  income?: number;
-  is_student?: boolean;
-  is_farmer?: boolean;
-};
-
-const profileSchema: z.ZodType<ProfileFormValues> = z.object({
-  age: z.preprocess((val) => Number.isNaN(val as number) || val === '' ? undefined : Number(val), z.number().min(1, "Age must be positive").optional()),
+const profileSchema = z.object({
+  age: z.number().min(1, "Age must be positive").optional().or(z.nan()),
   state: z.string().optional(),
-  income: z.preprocess((val) => Number.isNaN(val as number) || val === '' ? undefined : Number(val), z.number().min(0, "Income must be positive").optional()),
+  income: z.number().min(0, "Income must be positive").optional().or(z.nan()),
   is_student: z.boolean().optional(),
   is_farmer: z.boolean().optional(),
-}) as any;
+});
+
+type ProfileFormValues = z.infer<typeof profileSchema>;
 
 export default function ProfilePage() {
   const { token } = useAuth();
@@ -49,10 +43,15 @@ export default function ProfilePage() {
 
   const mutation = useMutation({
     mutationFn: (data: ProfileFormValues) => {
+      const cleanData = {
+        ...data,
+        age: Number.isNaN(data.age) ? undefined : data.age,
+        income: Number.isNaN(data.income) ? undefined : data.income,
+      };
       if (profile?.id) {
-        return updateProfile(profile.id, data, token);
+        return updateProfile(profile.id, cleanData, token);
       }
-      return createProfile(data, token);
+      return createProfile(cleanData, token);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['profile'] });
