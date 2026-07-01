@@ -3,7 +3,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
-import { GoogleGenerativeAI } from 'npm:@google/generative-ai'
+import { GoogleGenAI } from 'npm:@google/genai'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -29,12 +29,14 @@ serve(async (req) => {
     const geminiApiKey = Deno.env.get('GEMINI_API_KEY')
     if (!geminiApiKey) throw new Error("GEMINI_API_KEY is not set")
 
-    const genAI = new GoogleGenerativeAI(geminiApiKey)
+    const ai = new GoogleGenAI({ apiKey: geminiApiKey })
 
     // 1. Generate embedding for the user's query
-    const model = genAI.getGenerativeModel({ model: "embedding-001" })
-    const embeddingResult = await model.embedContent(query)
-    const embedding = embeddingResult.embedding.values
+    const embeddingResponse = await ai.models.embedContent({
+      model: 'text-embedding-004',
+      contents: query
+    })
+    const embedding = embeddingResponse.embeddings?.[0]?.values || []
 
     // 2. Search Supabase using match_schemes RPC
     const supabase = createClient(
@@ -76,9 +78,11 @@ Answer the user's question clearly, suggesting the best schemes from the context
 CRITICAL INSTRUCTION: You MUST respond entirely in ${targetLanguage}. Do not use English unless translating a specific proper noun that has no translation.`
 
     // 3. Generate response using Gemini
-    const chatModel = genAI.getGenerativeModel({ model: "gemini-1.5-pro" })
-    const result = await chatModel.generateContent(prompt)
-    const responseText = result.response.text()
+    const result = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: prompt
+    })
+    const responseText = result.text || ""
     
     // 4. Translate the schemes array if needed
     let translatedSchemes = schemes;
@@ -86,8 +90,11 @@ CRITICAL INSTRUCTION: You MUST respond entirely in ${targetLanguage}. Do not use
       const translatePrompt = `Translate the following JSON array of government schemes into ${targetLanguage}. Keep the exact JSON array structure and keys ("id", "title", "department", "description"). Only translate the string values for "title", "department", and "description". Do not add any markdown or explanation, return only the raw JSON array.
       JSON: ${JSON.stringify(schemes)}`;
       try {
-        const translateResult = await chatModel.generateContent(translatePrompt);
-        let text = translateResult.response.text() || "[]";
+        const translateResult = await ai.models.generateContent({
+          model: 'gemini-2.5-flash',
+          contents: translatePrompt
+        });
+        let text = translateResult.text || "[]";
         text = text.replace(/```json/g, '').replace(/```/g, '').trim();
         translatedSchemes = JSON.parse(text);
       } catch (e) {
