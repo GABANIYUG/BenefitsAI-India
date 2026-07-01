@@ -2,19 +2,12 @@ import { supabase } from '../lib/supabase';
 
 export interface ProfileData {
   id?: string;
-  userId?: string;
-  relation?: string;
+  full_name?: string;
   age?: number;
-  gender?: string;
   state?: string;
-  district?: string;
   income?: number;
-  casteCategory?: string;
-  occupation?: string;
-  isStudent?: boolean;
-  isFarmer?: boolean;
-  hasDisability?: boolean;
-  maritalStatus?: string;
+  is_student?: boolean;
+  is_farmer?: boolean;
 }
 
 export const getProfiles = async (token: string | null) => {
@@ -22,9 +15,9 @@ export const getProfiles = async (token: string | null) => {
   if (!user) throw new Error("Unauthorized");
   
   const { data, error } = await supabase
-    .from('Profile')
+    .from('profiles')
     .select('*')
-    .eq('userId', user.id);
+    .eq('id', user.id);
     
   if (error) throw error;
   return { success: true, data };
@@ -34,12 +27,9 @@ export const createProfile = async (profileData: ProfileData, token: string | nu
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("Unauthorized");
 
-  // Ensure user exists in DB first
-  await supabase.from('User').upsert({ id: user.id, email: user.email });
-
   const { data, error } = await supabase
-    .from('Profile')
-    .insert({ ...profileData, userId: user.id })
+    .from('profiles')
+    .insert({ ...profileData, id: user.id })
     .select()
     .single();
     
@@ -52,10 +42,9 @@ export const updateProfile = async (id: string, profileData: ProfileData, token:
   if (!user) throw new Error("Unauthorized");
 
   const { data, error } = await supabase
-    .from('Profile')
+    .from('profiles')
     .update(profileData)
-    .eq('id', id)
-    .eq('userId', user.id)
+    .eq('id', user.id)
     .select()
     .single();
     

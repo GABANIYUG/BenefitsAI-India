@@ -7,11 +7,11 @@ import { getProfiles, createProfile, updateProfile } from "../services/profile.s
 import { useAuth } from "../contexts/AuthContext";
 
 const profileSchema = z.object({
-  age: z.number({ message: "Age must be a number" }).min(1, "Age must be positive").optional(),
-  state: z.string().min(2, "State is required").optional(),
-  income: z.number({ message: "Income must be a number" }).min(0).optional(),
-  isStudent: z.boolean().optional(),
-  isFarmer: z.boolean().optional(),
+  age: z.union([z.number().min(1, "Age must be positive"), z.nan()]).optional().transform(v => isNaN(v as number) ? undefined : v),
+  state: z.string().optional(),
+  income: z.union([z.number().min(0, "Income must be positive"), z.nan()]).optional().transform(v => isNaN(v as number) ? undefined : v),
+  is_student: z.boolean().optional(),
+  is_farmer: z.boolean().optional(),
 });
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
@@ -34,8 +34,8 @@ export default function ProfilePage() {
       age: undefined,
       state: '',
       income: undefined,
-      isStudent: false,
-      isFarmer: false
+      is_student: false,
+      is_farmer: false
     }
   });
 
@@ -52,6 +52,10 @@ export default function ProfilePage() {
       queryClient.invalidateQueries({ queryKey: ['profile'] });
       setIsEditing(false);
       alert('Profile updated successfully!');
+    },
+    onError: (error: any) => {
+      alert(`Failed to save profile: ${error.message}`);
+      console.error(error);
     }
   });
 
@@ -119,13 +123,13 @@ export default function ProfilePage() {
             <div className="pt-4 border-t border-outline-variant/10">
               <h3 className="font-medium text-on-surface mb-3">Categories</h3>
               <div className="flex gap-4">
-                {currentValues.isStudent && (
+                {currentValues.is_student && (
                   <span className="px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-bold">Student</span>
                 )}
-                {currentValues.isFarmer && (
+                {currentValues.is_farmer && (
                   <span className="px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-bold">Farmer</span>
                 )}
-                {!currentValues.isStudent && !currentValues.isFarmer && (
+                {!currentValues.is_student && !currentValues.is_farmer && (
                   <span className="text-on-surface-variant text-sm">No special categories selected.</span>
                 )}
               </div>
@@ -170,12 +174,12 @@ export default function ProfilePage() {
               <h3 className="font-medium text-on-surface">Categories</h3>
               
               <label className="flex items-center gap-3 cursor-pointer p-3 rounded-lg hover:bg-surface-container-highest transition-colors">
-                <input type="checkbox" {...register("isStudent")} className="w-5 h-5 accent-primary" />
+                <input type="checkbox" {...register("is_student")} className="w-5 h-5 accent-primary" />
                 <span className="text-on-surface">I am a Student</span>
               </label>
               
               <label className="flex items-center gap-3 cursor-pointer p-3 rounded-lg hover:bg-surface-container-highest transition-colors">
-                <input type="checkbox" {...register("isFarmer")} className="w-5 h-5 accent-primary" />
+                <input type="checkbox" {...register("is_farmer")} className="w-5 h-5 accent-primary" />
                 <span className="text-on-surface">I am a Farmer</span>
               </label>
             </div>
